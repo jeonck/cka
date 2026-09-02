@@ -21,9 +21,9 @@ jobs:
     # A hung browser install should fail in minutes, not burn the default 6 hours.
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
@@ -60,6 +60,12 @@ jobs:
         run: npm run build:pdf
 
       - uses: actions/configure-pages@v5
+        # enablement turns Pages on and sets the source to GitHub Actions if it
+        # is not configured yet, so a fresh clone of this repo deploys without a
+        # manual visit to Settings -> Pages.
+        with:
+          enablement: true
+
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
