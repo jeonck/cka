@@ -18,6 +18,8 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    # A hung browser install should fail in minutes, not burn the default 6 hours.
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
 
@@ -30,7 +32,10 @@ jobs:
         run: npm ci
 
       - name: Install Chromium for the PDF build
-        run: npx playwright install --with-deps chromium
+        # No --with-deps: ubuntu-latest already ships Playwright's system
+        # libraries, and the apt step it adds is slow and can hang.
+        # --yes stops npx prompting for confirmation on a non-interactive runner.
+        run: npx --yes playwright install chromium
 
       - name: Validate drill data
         run: npm run check
