@@ -8,6 +8,13 @@ Live site: **<https://cka.metacog.co.kr/>** · one-book reference PDF at
 
 ---
 
+## How this was specified
+
+[`PROMPT.md`](PROMPT.md) is the build brief that produced this repository, revised after the fact. It carries the
+decisions that had to be asked about the first time, the environment constraints that had to be discovered, and a
+changelog mapping each of the thirteen things the first attempt got wrong to the change that prevents it. It is a
+repository document, not a published page.
+
 ## Content policy: no exam dumps
 
 **The CKA is under NDA. Nothing in this repository scrapes, reproduces, or approximates real exam questions, and no such
