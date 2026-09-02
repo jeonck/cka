@@ -1,0 +1,19 @@
+{{ define "main" }}
+<div class="domain-head">
+  <span class="weight-badge" style="--w: {{ .Params.examWeight }}"><b>{{ .Params.examWeight }}%</b></span>
+  <div>
+    <p class="eyebrow">Domain</p>
+    <p class="dsummary">{{ .Params.summary }}</p>
+  </div>
+</div>
+
+<div class="domain-actions">
+  <a class="btn" href="{{ (printf "tools/review/?domain=%s" .Params.domain) | relURL }}">Review this domain</a>
+  <a class="btn ghost" href="{{ (printf "tools/practice/?domain=%s" .Params.domain) | relURL }}">Practice tasks</a>
+  <span class="counts" data-domain-counts="{{ .Params.domain }}"></span>
+</div>
+
+<article class="prose">
+{{ .Content }}
+</article>
+{{ end }}

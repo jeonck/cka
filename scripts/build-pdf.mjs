@@ -12,7 +12,7 @@ import { fileURLToPath } from "node:url";
 import { chromiumExecutable } from "./chromium.mjs";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
-const out = `${root}dist/cka-reference.pdf`;
+const out = `${root}public/cka-reference.pdf`;
 const md = markdownIt({ html: true, linkify: false });
 
 const read = (p) => readFileSync(root + p, "utf8");
@@ -164,7 +164,7 @@ ${section("docs/curriculum.md", { appendix: true })}
 
 </body></html>`;
 
-if (!existsSync(`${root}dist`)) mkdirSync(`${root}dist`, { recursive: true });
+if (!existsSync(`${root}public`)) mkdirSync(`${root}public`, { recursive: true });
 
 const browser = await chromium.launch({ executablePath: chromiumExecutable() });
 const page = await browser.newPage();

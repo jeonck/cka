@@ -1,0 +1,70 @@
+baseURL = "https://cka.metacog.co.kr/"
+locale = "en"
+title = "CKA Study"
+enableRobotsTXT = true
+# No tags or categories on this site; without this Hugo warns about a missing
+# taxonomy layout on every build.
+disableKinds = ["taxonomy", "term"]
+
+# Disable the default tag/category taxonomies outright, so Hugo stops emitting
+# empty /tags/ and /categories/ RSS feeds.
+[taxonomies]
+
+# The site is served from the root of a custom domain, so there is no path
+# prefix to thread through templates or client-side fetches.
+
+[params]
+  tagline = "Decision trees, timed drills, and spaced repetition for the Certified Kubernetes Administrator exam."
+  curriculumVersion = "v1.35"
+  curriculumFetched = "2026-09-02"
+  examMinutes = 120
+  examTasks = 17
+  passMark = 66
+  repo = "https://github.com/jeonck/cka"
+
+[markup.goldmark.renderer]
+  # The domain pages carry hand-written <div class="callout"> blocks; without
+  # this Goldmark drops them and the guidance loses its framing.
+  unsafe = true
+
+[markup.goldmark.parser]
+  [markup.goldmark.parser.attribute]
+    block = true
+
+[markup.tableOfContents]
+  startLevel = 2
+  endLevel = 3
+
+# docs/ stays at the repository root — the research write-ups were specified to
+# live at docs/curriculum.md and docs/retrospectives.md — and is mounted into
+# the content tree so Hugo publishes it at /docs/. Declaring any mount replaces
+# every default, so all of them are listed.
+[module]
+  [[module.mounts]]
+    source = "content"
+    target = "content"
+  [[module.mounts]]
+    source = "docs"
+    target = "content/docs"
+  [[module.mounts]]
+    source = "data"
+    target = "data"
+  [[module.mounts]]
+    source = "layouts"
+    target = "layouts"
+  [[module.mounts]]
+    source = "static"
+    target = "static"
+
+# One JSON endpoint holding every drill item, emitted at /api/items.json and
+# fetched once by the study tools.
+[outputFormats.items]
+  mediaType = "application/json"
+  baseName = "items"
+  isPlainText = true
+  notAlternative = true
+
+[outputs]
+  home = ["html"]
+  section = ["html"]
+  page = ["html"]

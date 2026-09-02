@@ -1,7 +1,6 @@
 ---
 title: CKA Curriculum (verbatim)
-layout: page.njk
-order: 1
+weight: 1
 ---
 
 # CKA Curriculum — v1.35

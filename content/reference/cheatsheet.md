@@ -1,6 +1,6 @@
 ---
 title: Command Cheat Sheet
-order: 1
+weight: 1
 summary: The commands and flags worth memorising, grouped by what you are trying to do.
 ---
 

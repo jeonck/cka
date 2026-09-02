@@ -1,0 +1,7 @@
+{{- $id := .Get "id" | default "fDomain" -}}
+<select id="{{ $id }}">
+  <option value="">All domains</option>
+  {{- range (site.GetPage "/domains").Pages.ByWeight }}
+  <option value="{{ .Params.domain }}">{{ with .Params.shortTitle }}{{ . }}{{ else }}{{ .Title }}{{ end }} ({{ .Params.examWeight }}%)</option>
+  {{- end }}
+</select>

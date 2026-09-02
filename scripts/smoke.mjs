@@ -1,4 +1,4 @@
-// End-to-end smoke test of the study tools against a built ./dist.
+// End-to-end smoke test of the study tools against a built ./public.
 // Run with: npm run test:smoke   (after npm run build)
 import { chromium } from 'playwright';
 import { chromiumExecutable } from './chromium.mjs';
@@ -7,7 +7,7 @@ import { readFileSync, existsSync, statSync } from 'node:fs';
 import { extname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const ROOT = fileURLToPath(new URL('../dist', import.meta.url));
+const ROOT = fileURLToPath(new URL('../public', import.meta.url));
 const types = {'.html':'text/html','.js':'text/javascript','.css':'text/css','.json':'application/json'};
 const server = createServer((req,res)=>{
   let p = join(ROOT, decodeURIComponent(req.url.split('?')[0]));

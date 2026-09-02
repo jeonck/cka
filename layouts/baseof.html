@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ if not .IsHome }}{{ .Title }} · {{ end }}{{ site.Title }}</title>
+<meta name="description" content="{{ with .Params.summary }}{{ . }}{{ else }}{{ site.Params.tagline }}{{ end }}">
+<link rel="canonical" href="{{ .Permalink }}">
+<link rel="stylesheet" href="{{ "assets/css/main.css" | relURL }}">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='13' font-size='13'>☸</text></svg>">
+<script>
+  window.CKA_BASE = "{{ "/" | relURL }}";
+  (function () {
+    try {
+      var t = localStorage.getItem("cka.theme");
+      if (t) document.documentElement.setAttribute("data-theme", t);
+    } catch (e) {}
+  })();
+</script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="topbar">
+  <a class="brand" href="{{ "/" | relURL }}"><span aria-hidden="true">☸</span> {{ site.Title }}</a>
+  <button id="navToggle" class="nav-toggle" aria-expanded="false" aria-controls="sidenav">Menu</button>
+  <button id="themeToggle" class="theme-toggle" title="Toggle theme (t)" aria-label="Toggle colour theme">◐</button>
+</header>
+
+<div class="shell">
+  <nav id="sidenav" class="sidenav" aria-label="Site">
+    <p class="nav-h">Domains</p>
+    <ul>
+      {{ range (site.GetPage "/domains").Pages.ByWeight }}
+      <li><a href="{{ .RelPermalink }}">{{ with .Params.shortTitle }}{{ . }}{{ else }}{{ .Title }}{{ end }}
+        <span class="pill">{{ .Params.examWeight }}%</span></a></li>
+      {{ end }}
+    </ul>
+    <p class="nav-h">Study tools</p>
+    <ul>
+      <li><a href="{{ "tools/review/" | relURL }}">Review session <kbd>r</kbd></a></li>
+      <li><a href="{{ "tools/practice/" | relURL }}">Practice tasks</a></li>
+      <li><a href="{{ "tools/mnemonics/" | relURL }}">Mnemonics</a></li>
+      <li><a href="{{ "tools/dashboard/" | relURL }}">Dashboard</a></li>
+      <li><a href="{{ "tools/plan/" | relURL }}">Study plan</a></li>
+    </ul>
+    <p class="nav-h">Reference</p>
+    <ul>
+      <li><a href="{{ "reference/cheatsheet/" | relURL }}">Command cheat sheet</a></li>
+      <li><a href="{{ "reference/exam-strategy/" | relURL }}">Exam strategy</a></li>
+    </ul>
+    <p class="nav-h">Research</p>
+    <ul>
+      <li><a href="{{ "docs/curriculum/" | relURL }}">Curriculum {{ site.Params.curriculumVersion }}</a></li>
+      <li><a href="{{ "docs/retrospectives/" | relURL }}">Retrospectives</a></li>
+    </ul>
+    <p class="nav-h">Data</p>
+    <ul>
+      <li><a href="{{ "tools/data/" | relURL }}">Export / import progress</a></li>
+      <li><a href="{{ "cka-reference.pdf" | relURL }}">One-book PDF</a></li>
+    </ul>
+  </nav>
+
+  <main id="main" class="content">
+    {{ block "main" . }}{{ end }}
+  </main>
+</div>
+
+<footer class="foot">
+  <p>Curriculum {{ site.Params.curriculumVersion }}, fetched {{ site.Params.curriculumFetched }}.
+  All practice content is original — <a href="{{ "/" | relURL }}#policy">no exam dumps</a>.
+  Progress is stored only in this browser.</p>
+</footer>
+
+<script type="module" src="{{ "assets/js/app.js" | relURL }}"></script>
+{{ with .Params.script }}<script type="module" src="{{ (printf "assets/js/%s.js" .) | relURL }}"></script>{{ end }}
+</body>
+</html>

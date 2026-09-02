@@ -1,8 +1,8 @@
 ---
 title: Storage
 domain: storage
-weight: 10
-order: 5
+examWeight: 10
+weight: 5
 summary: StorageClasses and dynamic provisioning, volume types, access modes, reclaim policies, PV/PVC binding.
 ---
 

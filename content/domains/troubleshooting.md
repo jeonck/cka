@@ -1,8 +1,8 @@
 ---
 title: Troubleshooting
 domain: troubleshooting
-weight: 30
-order: 1
+examWeight: 30
+weight: 1
 summary: The largest domain. Organised as symptom → decision tree → minimal command sequence.
 ---
 

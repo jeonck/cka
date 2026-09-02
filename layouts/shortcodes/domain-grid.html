@@ -1,0 +1,8 @@
+<div class="grid">
+{{- range (site.GetPage "/domains").Pages.ByWeight }}
+  <a class="card" href="{{ .RelPermalink }}" style="text-decoration:none">
+    <p class="eyebrow">{{ .Params.examWeight }}% of the exam</p>
+    <strong>{{ with .Params.shortTitle }}{{ . }}{{ else }}{{ .Title }}{{ end }}</strong>
+  </a>
+{{- end }}
+</div>

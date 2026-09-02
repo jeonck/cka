@@ -1,0 +1,6 @@
+{{- dict
+      "flashcards" hugo.Data.flashcards.items
+      "cloze"      hugo.Data.cloze.items
+      "tasks"      hugo.Data.tasks.items
+      "mnemonics"  hugo.Data.mnemonics.items
+  | jsonify -}}

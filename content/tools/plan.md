@@ -1,12 +1,12 @@
 ---
 title: Study plan
-layout: base.njk
-permalink: /tools/plan/
 script: plan
+weight: 5
 summary: Target exam date to daily workload.
 ---
-<h1>Study plan</h1>
+
 <div class="toolbar">
   <label>Target exam date <input type="date" id="examDate"></label>
 </div>
+
 <div id="plan"></div>

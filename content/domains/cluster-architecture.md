@@ -1,8 +1,9 @@
 ---
 title: Cluster Architecture, Installation and Configuration
 domain: cluster-architecture
-weight: 25
-order: 2
+shortTitle: Cluster Architecture
+examWeight: 25
+weight: 2
 summary: RBAC, kubeadm lifecycle, etcd, HA control plane, Helm/Kustomize, extension interfaces, CRDs and operators.
 ---
 

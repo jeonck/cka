@@ -1,0 +1,23 @@
+{{- $items := hugo.Data.mnemonics.items -}}
+{{- range (site.GetPage "/domains").Pages.ByWeight -}}
+{{- $domain := .Params.domain -}}
+{{- $mine := where $items "domain" $domain -}}
+{{- if $mine }}
+<h2>{{ with .Params.shortTitle }}{{ . }}{{ else }}{{ .Title }}{{ end }} <span class="pill">{{ .Params.examWeight }}%</span></h2>
+{{- range $mine }}
+<div class="card">
+  <h3 style="margin:0 0 6px">{{ .title }}</h3>
+  <p style="margin:0 0 10px"><strong>{{ .mnemonic }}</strong></p>
+  <details>
+    <summary>Show the sequence</summary>
+    <table><tbody>
+      {{- range .sequence }}
+      <tr><th style="white-space:nowrap">{{ .key }}</th><td><code>{{ .text }}</code></td></tr>
+      {{- end }}
+    </tbody></table>
+    <p class="small muted"><strong>Why:</strong> {{ .why }}</p>
+  </details>
+</div>
+{{- end }}
+{{- end }}
+{{- end }}

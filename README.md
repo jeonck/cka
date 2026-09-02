@@ -1,9 +1,10 @@
 # CKA study site
 
-A static study site for the **Certified Kubernetes Administrator** exam, built around the idea that a performance-based
-exam is passed by drilling *decisions* under a clock, not by reading a topic list.
+A [Hugo](https://gohugo.io/) study site for the **Certified Kubernetes Administrator** exam, built around the idea
+that a performance-based exam is passed by drilling *decisions* under a clock, not by reading a topic list.
 
-Live site: `https://<owner>.github.io/cka/` · one-book reference PDF at `/cka-reference.pdf`
+Live site: **<https://cka.metacog.co.kr/>** · one-book reference PDF at
+[`/cka-reference.pdf`](https://cka.metacog.co.kr/cka-reference.pdf)
 
 ---
 
@@ -51,20 +52,31 @@ Dark by default with a light toggle, mobile layout, and keyboard-driven review (
 
 ## Tech choices, and why
 
-**[Eleventy](https://www.11ty.dev/) as the generator.** The requirement was plain markdown as the source of truth plus a
-handful of bespoke, stateful UI components. Eleventy renders markdown with almost no ceremony and imposes no client-side
-framework, so the study tools are plain ES modules that ship as written. A docs-oriented framework (MkDocs Material,
-Docusaurus, Starlight) would have given nicer navigation for free but would have made the interactive tools an
-awkward add-on; a full app framework would have made the markdown an awkward add-on. Eleventy sits where this project
-actually lives.
+**[Hugo](https://gohugo.io/) as the generator.** The requirement was plain markdown as the source of truth plus a
+handful of bespoke, stateful UI components. Four Hugo features do real work here rather than being incidental:
 
-Two configuration decisions worth knowing about:
+- **`data/` is a first-class concept.** `data/*.json` is read natively as `hugo.Data`, so the drill items feed the
+  templates with no glue code. That is what makes the mnemonics *page* a render of `data/mnemonics.json` rather than a
+  second copy of it — the site and the PDF read one source and cannot drift.
+- **Custom output formats** generate `/api/items.json` from that same data (`layouts/api/section.items.json`), so the
+  endpoint the study tools fetch is a build artefact, not a file anyone maintains.
+- **Module mounts** let `docs/` stay at the repository root — the research write-ups were specified to live at
+  `docs/curriculum.md` and `docs/retrospectives.md` — while still being published at `/docs/`.
+- **Shortcodes** keep the tool pages as markdown while still rendering the domain dropdowns from the domain pages'
+  own front matter, so adding a domain updates every selector.
 
-- **Nunjucks is disabled inside markdown** (`markdownTemplateEngine: false`). The content is full of `kubectl jsonpath`
-  and JSON patch arguments; leaving a template engine switched on means `'{"spec":{"replicas":4}}'` is one bad day away
-  from a build error. URL prefixing is handled by Eleventy's `HtmlBasePlugin` instead, which rewrites the output HTML.
-- **`data/*.json` is the source of truth for drill items**, and `content/**/*.md` for prose. The mnemonics *page* is
-  rendered from the JSON rather than duplicated as markdown, so the site and the PDF cannot drift apart.
+Plus the obvious: a single static binary, no `node_modules` in the render path, and a ~60 ms build.
+
+The alternatives, honestly. A docs-oriented theme (MkDocs Material, Docusaurus, Starlight) gives nicer navigation for
+free but makes bespoke stateful tools an awkward add-on; an app framework makes the markdown the awkward part. Hugo's
+cost is Go templates, which are less pleasant to write than JS — that is a real trade, paid once in `layouts/`. It buys
+nothing for the study tools themselves, which are vanilla ES modules under any generator.
+
+One configuration decision worth knowing about: **Goldmark runs with `unsafe = true`**. The domain pages carry
+hand-written `<div class="callout">` blocks, and Goldmark drops raw HTML by default. The content is trusted (it is in
+this repository), so this is safe here and would not be on a site that renders submitted markdown.
+
+Node is still a dependency, but only for the PDF build and the browser smoke test — never for rendering the site.
 
 **No client-side framework, no backend, no accounts.** All progress is in `localStorage` under one versioned key, with
 JSON export/import so it survives a cleared cache or a move between machines.
@@ -76,22 +88,30 @@ site, so the two can't disagree, and it builds on a clean CI runner with no docu
 
 ## Running it
 
+Needs [Hugo](https://gohugo.io/installation/) v0.164.0 or newer on `PATH`, plus Node 22 for the PDF and the tests.
+
 ```bash
 npm install
-npm run build        # site        -> dist/
-npm run serve        # dev server with live reload
-npm run build:pdf    # PDF         -> dist/cka-reference.pdf
+npm run build        # site -> public/     (hugo --gc --minify)
+npm run serve        # hugo server, live reload
+npm run build:pdf    # PDF  -> public/cka-reference.pdf
 npm run build:all    # both
 npm run check        # validate the drill data
 npm run test:smoke   # drive every study tool in headless Chromium
 ```
 
-`npm run test:smoke` expects a root-path build (`npm run build` with no `PATH_PREFIX`) in `dist/`.
+`npm run build:pdf` and `npm run test:smoke` both expect `npm run build` to have run first — the PDF is written into
+`public/`, and the smoke test serves `public/` over a local HTTP server.
 
 ### Deployment
 
-`.github/workflows/deploy.yml` runs on every push to `main`: validate data → build → smoke-test → rebuild with the Pages
-path prefix → regenerate the PDF → deploy.
+`.github/workflows/deploy.yml` runs on every push to `main`: install Hugo → validate data → build → regenerate the PDF
+→ smoke-test → deploy.
+
+**Custom domain.** The site is served from `cka.metacog.co.kr`. `static/CNAME` holds that hostname and Hugo copies it
+into `public/`, which is what tells Pages about the domain; DNS is configured separately at the registrar. Because the
+site lives at the root of its own domain there is no path prefix, so one build serves both the tests and the deploy —
+if you ever move it back to a `github.io/<repo>/` project page, set `baseURL` in `hugo.toml` accordingly.
 
 **One manual step, and it must be done once before the first deploy succeeds:** in *Settings → Pages*, set **Source**
 to **GitHub Actions**.
@@ -101,32 +121,39 @@ Until then the build, tests and PDF all pass and only the last step fails, with
 option, but `GITHUB_TOKEN` is refused with `Resource not accessible by integration` when it tries to create the Pages
 site, so enabling Pages stays an owner action.
 
-The workflow sets `PATH_PREFIX=/<repo-name>/` because a GitHub *project* page is served from a subdirectory. On a user
-page (`<owner>.github.io`) or a custom domain, drop that `env:` block.
-
 ---
 
 ## Layout
 
 ```
+hugo.toml               baseURL, Goldmark unsafe, the items output format, docs/ mount
 content/
+  _index.md             home page prose (the hero lives in layouts/home.html)
   domains/*.md          the five domain pages — decision trees, prose source of truth
   reference/*.md        command cheat sheet, exam strategy
-docs/
+  tools/*.md            the six tool pages; front matter `script:` names the ES module
+  api/_index.md         emits /api/items.json via the `items` output format
+docs/                   mounted to /docs/ — kept at the repo root by design
   curriculum.md         CNCF curriculum v1.35, verbatim, with source URLs and fetch date
   retrospectives.md     community themes, with sources and a sourcing caveat
-data/
-  flashcards.json       drill items — source of truth for the tools AND the PDF
+data/                   read natively by Hugo AND by scripts/build-pdf.mjs
+  flashcards.json       drill items
   cloze.json            [[blanks]] marked inline
   tasks.json            timed scenarios: solution steps, verification, gotcha
   mnemonics.json        renders both the site page and the PDF chapter
-site/
-  _includes/*.njk       layouts
-  _data/*.js            global data; drills.js reads data/*.json
-  pages/*.njk           tool pages + /api/items.json
+layouts/
+  baseof.html           chrome; nav is generated from the domain pages
+  home.html page.html section.html
+  domains/page.html     weight badge + per-domain drill links
+  api/section.items.json
+  shortcodes/           domain-select, domain-grid, mnemonics
+  _markup/render-heading.html
+static/
+  CNAME                 cka.metacog.co.kr
+  assets/css/main.css
   assets/js/            srs.js store.js review.js practice.js dashboard.js plan.js datatool.js
 scripts/
-  build-pdf.mjs         markdown + JSON -> Chromium -> dist/cka-reference.pdf
+  build-pdf.mjs         markdown + JSON -> Chromium -> public/cka-reference.pdf
   check-data.mjs        data validation
   smoke.mjs             end-to-end browser test
 ```
@@ -134,10 +161,12 @@ scripts/
 ### Adding content
 
 - **Prose** — drop a markdown file in `content/domains/` or `content/reference/`. Front matter needs `title`, and for a
-  domain also `domain`, `weight`, `order`, `summary`. Permalinks come from the directory data files.
+  domain also `domain`, `examWeight` (the exam percentage), `shortTitle` if the full one is long, `weight` (Hugo's
+  ordering key) and `summary`. Nav, the home page weight bar, and every domain dropdown are generated from those, so
+  nothing needs registering.
 - **Drill items** — append to the relevant `data/*.json`. `npm run check` enforces unique ids, known domains, balanced
   `[[blanks]]`, and that every task has both a model solution and a verification command.
-- Nothing needs registering anywhere: the site, the API endpoint and the PDF all read the same files.
+- Nothing needs registering anywhere: the site, `/api/items.json` and the PDF all read the same files.
 
 ---
 

@@ -1,0 +1,15 @@
+{{ define "main" }}
+<article class="prose">
+  <h1>{{ .Title }}</h1>
+  {{ .Content }}
+  <div class="grid">
+  {{ range .Pages.ByWeight }}
+    <a class="card" href="{{ .RelPermalink }}" style="text-decoration:none">
+      {{ with .Params.examWeight }}<p class="eyebrow">{{ . }}% of the exam</p>{{ end }}
+      <strong>{{ .Title }}</strong>
+      {{ with .Params.summary }}<p class="small muted">{{ . }}</p>{{ end }}
+    </a>
+  {{ end }}
+  </div>
+</article>
+{{ end }}

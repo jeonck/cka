@@ -1,8 +1,8 @@
 ---
 title: Workloads and Scheduling
 domain: workloads-scheduling
-weight: 15
-order: 4
+examWeight: 15
+weight: 4
 summary: Deployments and rollouts, ConfigMaps and Secrets, autoscaling, self-healing primitives, scheduling controls.
 ---
 

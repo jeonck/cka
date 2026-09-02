@@ -1,8 +1,8 @@
 ---
 title: Services and Networking
 domain: services-networking
-weight: 20
-order: 3
+examWeight: 20
+weight: 3
 summary: Pod connectivity, Services and endpoints, NetworkPolicy, Ingress, Gateway API, CoreDNS.
 ---
 

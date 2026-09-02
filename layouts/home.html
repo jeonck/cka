@@ -1,0 +1,25 @@
+{{ define "main" }}
+<div class="hero">
+  <h1>Pass the CKA by drilling decisions, not topics</h1>
+  <p>{{ site.Params.tagline }}</p>
+  <p class="small">Built against CNCF curriculum <strong>{{ site.Params.curriculumVersion }}</strong>, fetched
+  {{ site.Params.curriculumFetched }}. The exam is {{ site.Params.examMinutes }} minutes for roughly
+  {{ site.Params.examTasks }} performance-based tasks at {{ site.Params.passMark }}% to pass — about seven minutes each,
+  including reading, context switching, and verifying.</p>
+  <div class="weights">
+    {{- range (site.GetPage "/domains").Pages.ByWeight }}
+    <a href="{{ .RelPermalink }}" style="flex-grow: {{ .Params.examWeight }}" title="{{ .Title }} — {{ .Params.examWeight }}%">{{ .Params.examWeight }}%</a>
+    {{- end }}
+  </div>
+  <p class="small muted">Domain weights, to scale. Troubleshooting alone is 30% — nearly a third of the exam.</p>
+  <div class="toolbar">
+    <a class="btn" href="{{ "tools/review/" | relURL }}">Start a review session</a>
+    <a class="btn ghost" href="{{ "tools/practice/" | relURL }}">Timed practice tasks</a>
+    <a class="btn ghost" href="{{ "tools/plan/" | relURL }}">Build a study plan</a>
+  </div>
+</div>
+
+<article class="prose">
+{{ .Content }}
+</article>
+{{ end }}

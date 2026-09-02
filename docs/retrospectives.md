@@ -1,7 +1,6 @@
 ---
 title: Community Retrospectives
-layout: page.njk
-order: 2
+weight: 2
 ---
 
 # What people say went wrong — community retrospectives
@@ -76,7 +75,7 @@ because the *domain names and weights did not change* — only the competencies 
   `apt-mark unhold`/`hold` bracket or the `kubelet` restart is the common stumble.
 - Advice repeated across guides: get etcd restore reliably under ~6 minutes and treat it as guaranteed points.
 
-**Drill implication:** these two live in [Mnemonics](/reference/mnemonics/) as ordered sequences, because ordering is
+**Drill implication:** these two live in [Mnemonics](/tools/mnemonics/) as ordered sequences, because ordering is
 what fails under time pressure — not comprehension.
 
 ## Theme 5 — Troubleshooting fluency comes from breaking things, not reading
@@ -111,7 +110,7 @@ Near-universal, and the cheapest wins available:
 - Bookmark the handful of doc pages you genuinely can't memorise (etcd restore, kubeadm upgrade, NetworkPolicy schema)
   before the exam starts.
 
-**Drill implication:** [Cloze drills](/tools/cloze/) hide exactly these — flags, field names, and paths — because those
+**Drill implication:** [Cloze drills](/tools/review/) hide exactly these — flags, field names, and paths — because those
 are what you must produce without a lookup.
 
 ## Theme 7 — Verify, always, and in the same 20 seconds

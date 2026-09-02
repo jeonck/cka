@@ -1,21 +1,15 @@
 ---
 title: Review session
-layout: base.njk
-permalink: /tools/review/
 script: review
+weight: 1
 summary: Keyboard-driven flashcard and cloze review, scheduled by SM-2.
 ---
-<h1>Review session</h1>
-<p class="muted">Flashcards and cloze drills, ordered by an SM-2 scheduler: overdue items first, then anything you have
-never seen. Everything is keyboard-driven — <kbd>Space</kbd> reveals, <kbd>1</kbd>–<kbd>4</kbd> grade, <kbd>s</kbd> skips.</p>
+
+Flashcards and cloze drills, ordered by an SM-2 scheduler: overdue items first, then anything you have never seen.
+Everything is keyboard-driven — <kbd>Space</kbd> reveals, <kbd>1</kbd>–<kbd>4</kbd> grade, <kbd>s</kbd> skips.
 
 <div class="toolbar">
-  <label>Domain
-    <select id="fDomain">
-      <option value="">All domains</option>
-      {% for d in domains %}<option value="{{ d.id }}">{{ d.short or d.title }} ({{ d.weight }}%)</option>{% endfor %}
-    </select>
-  </label>
+  <label>Domain {{< domain-select id="fDomain" >}}</label>
   <label>Type
     <select id="fType">
       <option value="all">Flashcards + cloze</option>

@@ -1,6 +1,6 @@
 ---
 title: Exam Strategy
-order: 3
+weight: 3
 summary: The seven-minute budget, the wrong-cluster trap, flag-and-skip, and the verification habit.
 ---
 
