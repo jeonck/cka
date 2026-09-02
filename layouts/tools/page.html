@@ -1,0 +1,8 @@
+{{ define "main" }}
+<article class="prose">
+  {{/* Tool pages carry interactive markup rather than a document, so the
+       heading comes from front matter instead of being written in each file. */}}
+  <h1>{{ .Title }}</h1>
+  {{ .Content }}
+</article>
+{{ end }}
