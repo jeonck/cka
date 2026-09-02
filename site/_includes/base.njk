@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% if title %}{{ title }} · {% endif %}{{ site.title }}</title>
+<meta name="description" content="{{ summary or site.tagline }}">
+<link rel="stylesheet" href="/assets/css/main.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='13' font-size='13'>☸</text></svg>">
+<script>
+  window.CKA_BASE = "{{ '/' | url }}";
+  (function () {
+    try {
+      var t = localStorage.getItem("cka.theme");
+      if (t) document.documentElement.setAttribute("data-theme", t);
+    } catch (e) {}
+  })();
+</script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="topbar">
+  <a class="brand" href="/"><span aria-hidden="true">☸</span> {{ site.title }}</a>
+  <button id="navToggle" class="nav-toggle" aria-expanded="false" aria-controls="sidenav">Menu</button>
+  <button id="themeToggle" class="theme-toggle" title="Toggle theme (t)" aria-label="Toggle colour theme">◐</button>
+</header>
+
+<div class="shell">
+  <nav id="sidenav" class="sidenav" aria-label="Site">
+    <p class="nav-h">Domains</p>
+    <ul>
+      {% for d in domains %}
+      <li><a href="{{ d.url }}">{{ d.short or d.title }} <span class="pill">{{ d.weight }}%</span></a></li>
+      {% endfor %}
+    </ul>
+    <p class="nav-h">Study tools</p>
+    <ul>
+      <li><a href="/tools/review/">Review session <kbd>r</kbd></a></li>
+      <li><a href="/tools/practice/">Practice tasks</a></li>
+      <li><a href="/tools/mnemonics/">Mnemonics</a></li>
+      <li><a href="/tools/dashboard/">Dashboard</a></li>
+      <li><a href="/tools/plan/">Study plan</a></li>
+    </ul>
+    <p class="nav-h">Reference</p>
+    <ul>
+      <li><a href="/reference/cheatsheet/">Command cheat sheet</a></li>
+      <li><a href="/reference/exam-strategy/">Exam strategy</a></li>
+    </ul>
+    <p class="nav-h">Research</p>
+    <ul>
+      <li><a href="/docs/curriculum/">Curriculum {{ site.curriculumVersion }}</a></li>
+      <li><a href="/docs/retrospectives/">Retrospectives</a></li>
+    </ul>
+    <p class="nav-h">Data</p>
+    <ul>
+      <li><a href="/tools/data/">Export / import progress</a></li>
+      <li><a href="/cka-reference.pdf">One-book PDF</a></li>
+    </ul>
+  </nav>
+
+  <main id="main" class="content">
+    {{ content | safe }}
+  </main>
+</div>
+
+<footer class="foot">
+  <p>Curriculum {{ site.curriculumVersion }}, fetched {{ site.curriculumFetched }}. All practice content is original —
+  <a href="/#policy">no exam dumps</a>. Progress is stored only in this browser.</p>
+</footer>
+
+<script type="module" src="/assets/js/app.js"></script>
+{% if script %}<script type="module" src="/assets/js/{{ script }}.js"></script>{% endif %}
+</body>
+</html>

@@ -14,7 +14,7 @@ Nothing on this page is organised by component; you don't meet components, you m
 **Curriculum competencies:** troubleshoot clusters and nodes · troubleshoot cluster components · monitor cluster and
 application resource usage · manage and evaluate container output streams · troubleshoot services and networking.
 
-<div class="callout" markdown="1">
+<div class="callout">
 
 **Step 0, every single task.** Before you read the symptom:
 
@@ -201,7 +201,7 @@ disk and runs them without the API server's involvement. That's exactly why they
 and why editing the manifest is the fix: the kubelet notices the file change and recreates the Pod automatically. There
 is no `systemctl restart kube-apiserver`.
 
-<div class="callout warn" markdown="1">
+<div class="callout warn">
 **Trap:** always `cp /etc/kubernetes/manifests/kube-apiserver.yaml /tmp/` before editing. A typo'd flag makes the API
 server crash-loop, and now you're editing YAML with no `kubectl` and no undo.
 </div>
@@ -317,7 +317,7 @@ kubectl logs <pod> -n <ns> > /opt/answer.txt   # tasks often want the output wri
 *Why:* the kubelet captures each container's stdout/stderr to disk on the node; `kubectl logs` reads that, so it works
 even when the container has exited — but only for the current and previous instance.
 
-<div class="callout warn" markdown="1">
+<div class="callout warn">
 **Trap:** when a task says "write the log lines containing X to /opt/file", do it with `grep` and check the file:
 `kubectl logs <pod> | grep X > /opt/file && cat /opt/file`. Silent empty files are a common own-goal.
 </div>

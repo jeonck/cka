@@ -68,7 +68,7 @@ kubectl create quota q --hard=cpu=2,memory=4Gi $do
 kubectl create poddisruptionbudget pdb --selector=app=web --min-available=2 $do
 ```
 
-<div class="callout" markdown="1">
+<div class="callout">
 There is **no** imperative generator for: PersistentVolume, PersistentVolumeClaim, StorageClass, NetworkPolicy,
 DaemonSet, StatefulSet, Gateway, HTTPRoute, or tolerations/affinity stanzas. Those four manifests plus the two Gateway
 API kinds are the memorisation list — everything else you can generate.

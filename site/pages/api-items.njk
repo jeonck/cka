@@ -1,0 +1,10 @@
+---
+permalink: /api/items.json
+eleventyExcludeFromCollections: true
+---
+{
+  "flashcards": {{ drills.flashcards | json | safe }},
+  "cloze": {{ drills.cloze | json | safe }},
+  "tasks": {{ drills.tasks | json | safe }},
+  "mnemonics": {{ drills.mnemonics | json | safe }}
+}

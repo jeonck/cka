@@ -1,0 +1,21 @@
+{
+  "name": "cka-study-site",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "A study site for the Certified Kubernetes Administrator exam: decision-tree content, timed practice tasks, cloze drills, and an SM-2 spaced-repetition scheduler.",
+  "scripts": {
+    "build": "eleventy",
+    "serve": "eleventy --serve",
+    "build:pdf": "node scripts/build-pdf.mjs",
+    "build:all": "npm run build && npm run build:pdf",
+    "check": "node scripts/check-data.mjs",
+    "test:smoke": "node scripts/smoke.mjs"
+  },
+  "devDependencies": {
+    "@11ty/eleventy": "^3.0.0",
+    "markdown-it": "^14.1.0",
+    "markdown-it-anchor": "^9.2.0",
+    "playwright": "^1.49.0"
+  }
+}

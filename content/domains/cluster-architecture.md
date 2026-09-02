@@ -82,7 +82,7 @@ kubectl create serviceaccount app-sa -n dev
 kubectl set serviceaccount deploy/web app-sa -n dev
 ```
 
-<div class="callout warn" markdown="1">
+<div class="callout warn">
 **Trap:** RBAC is purely additive — there are no deny rules. If a subject can still do the thing, look for a *second*
 binding (often to `system:authenticated` or a group) rather than trying to subtract from the one you found.
 </div>
@@ -120,7 +120,7 @@ etcdctl --write-out=table snapshot status /opt/etcd-backup.db   # verify
 *Why:* etcd only speaks mutual TLS, so all three of `--cacert/--cert/--key` are mandatory; without them the failure
 looks like an outage but is your own client being rejected.
 
-<div class="callout" markdown="1">
+<div class="callout">
 **Don't memorise the cert paths — read them off the running Pod:**
 
 ```bash
@@ -208,7 +208,7 @@ the static Pod manifests. The kubelet is a *separate* package that `kubeadm` nev
 and restarted by hand afterwards. `apt-mark hold` exists because the packages are pinned to stop accidental upgrades;
 forgetting `unhold` makes `apt-get install` silently keep the old version.
 
-<div class="callout warn" markdown="1">
+<div class="callout warn">
 **Traps:** you may only upgrade **one minor version at a time** (1.33 → 1.34 → 1.35, never 1.33 → 1.35). `upgrade apply`
 runs on the first control-plane node only; every other node — control plane or worker — uses `upgrade node`. And the
 `pkgs.k8s.io` apt repository URL is per-minor-version, so skipping the `sed` makes every `apt-get install` fail to find
@@ -426,7 +426,7 @@ kubectl logs deploy/<operator> -n <operator-ns>      # 3. what is it complaining
 kubectl get <customkind> -A                          # 4. does it act on instances?
 ```
 
-<div class="callout warn" markdown="1">
+<div class="callout warn">
 **Trap:** deleting a CRD deletes **every custom resource of that kind**, cluster-wide, immediately. There is no
 confirmation.
 </div>

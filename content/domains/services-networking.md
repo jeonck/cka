@@ -91,7 +91,7 @@ spec:
           port: 5432
 ```
 
-<div class="callout warn" markdown="1">
+<div class="callout warn">
 **The list-indentation trap.** Under `from:`, two entries at the same level are **OR** ("web Pods, or anything in
 staging"). Putting `namespaceSelector` and `podSelector` under a *single* `-` makes them **AND** ("web Pods that are in
 staging"). One dash changes the meaning. Read the task's wording carefully and check your indentation before applying.
@@ -230,7 +230,7 @@ kubectl api-resources --api-group=gateway.networking.k8s.io
 didn't attach says so in `status.parents[].conditions` — usually `NotAllowedByListeners` (the Gateway's
 `allowedRoutes.namespaces` doesn't permit your namespace) or `NoMatchingParent`.
 
-<div class="callout" markdown="1">
+<div class="callout">
 Gateway API CRDs are **not** installed by default. `kubectl get gateway` returning
 `the server doesn't have a resource type "gateway"` means the CRDs are missing, not that your YAML is wrong.
 </div>

@@ -1,0 +1,20 @@
+---
+layout: base.njk
+---
+<div class="domain-head">
+  <span class="weight-badge" style="--w: {{ weight }}"><b>{{ weight }}%</b></span>
+  <div>
+    <p class="eyebrow">Domain</p>
+    <p class="dsummary">{{ summary }}</p>
+  </div>
+</div>
+
+<div class="domain-actions">
+  <a class="btn" href="/tools/review/?domain={{ domain }}">Review this domain</a>
+  <a class="btn ghost" href="/tools/practice/?domain={{ domain }}">Practice tasks</a>
+  <span class="counts" data-domain-counts="{{ domain }}"></span>
+</div>
+
+<article class="prose">
+{{ content | safe }}
+</article>
