@@ -1,0 +1,266 @@
+{
+  "$schema": "Original practice tasks written from published curriculum weights + community themes. No exam content.",
+  "items": [
+    {
+      "id":"tk-001","domain":"troubleshooting","title":"Pod stuck in Pending","points":6,"targetMinutes":6,
+      "context":"k8s-prod",
+      "scenario":"In namespace `web`, the Pod `checkout-7f9c` has been Pending for ten minutes. Find out why and make it run. Do not change the Pod's resource requests. Write the one-line reason you found to /opt/answers/checkout.txt.",
+      "hints":["The scheduler tells you the exact predicate that failed.","'Do not change requests' rules out one of the four Pending causes."],
+      "solution":[
+        {"cmd":"kubectl config use-context k8s-prod && kubectl config current-context","why":"Wrong-cluster work scores zero and gives no signal."},
+        {"cmd":"kubectl describe pod checkout-7f9c -n web | sed -n '/Events/,$p'","why":"FailedScheduling carries the failed predicate verbatim — 'had untolerated taint', 'Insufficient cpu', or an affinity mismatch."},
+        {"cmd":"kubectl get nodes -o custom-columns=NAME:.metadata.name,TAINTS:.spec.taints","why":"Confirms which node carries the taint named in the event."},
+        {"cmd":"kubectl taint nodes worker-2 maintenance=true:NoSchedule-","why":"Trailing dash removes the taint; the scheduler retries automatically within seconds."},
+        {"cmd":"mkdir -p /opt/answers && echo 'FailedScheduling: node(s) had untolerated taint {maintenance: true}' > /opt/answers/checkout.txt","why":"Tasks that ask for a written answer are graded on the file, so create the directory and cat the file back."}
+      ],
+      "verify":["kubectl get pod checkout-7f9c -n web -o wide   # Running","cat /opt/answers/checkout.txt"],
+      "gotcha":"If removing the taint is not allowed by the scenario, the alternative is a toleration on the Pod — which for a bare Pod means delete and recreate, since tolerations are immutable."
+    },
+    {
+      "id":"tk-002","domain":"troubleshooting","title":"CrashLoopBackOff with no obvious logs","points":7,"targetMinutes":7,
+      "context":"k8s-prod",
+      "scenario":"The Deployment `api` in namespace `payments` is in CrashLoopBackOff. Identify the container exit code and the cause, fix it without changing the image, and save the last 20 log lines from the failing instance to /opt/answers/api.log.",
+      "hints":["The running container is a fresh restart — its log is empty.","Exit code 137 is not an application error."],
+      "solution":[
+        {"cmd":"kubectl config use-context k8s-prod && kubectl config current-context","why":"Step zero, every task."},
+        {"cmd":"kubectl get pods -n payments","why":"Get the actual Pod name; RESTARTS tells you how long this has been going."},
+        {"cmd":"kubectl logs <pod> -n payments --previous --tail=20 > /opt/answers/api.log","why":"--previous reads the instance that died; the live container has no history."},
+        {"cmd":"kubectl describe pod <pod> -n payments | grep -A3 'Last State'","why":"Exit code and Reason. 137 + OOMKilled means the memory limit, not the app."},
+        {"cmd":"kubectl set resources deploy/api -n payments --limits=memory=512Mi","why":"Patches the Pod template and rolls it in one command — no editor, one rollout."}
+      ],
+      "verify":["kubectl rollout status deploy/api -n payments","kubectl get pods -n payments   # 1/1 Running, RESTARTS stops climbing","wc -l /opt/answers/api.log"],
+      "gotcha":"Exit code 1 means the app itself failed — read the log, don't raise limits. Exit 137 without OOMKilled can also be an external SIGKILL, e.g. a failing liveness probe."
+    },
+    {
+      "id":"tk-003","domain":"troubleshooting","title":"Node has gone NotReady","points":8,"targetMinutes":8,
+      "context":"k8s-prod",
+      "scenario":"`worker-2` shows NotReady. Bring it back. You have SSH to the node. Do not reboot it, and do not drain or delete it.",
+      "hints":["The Conditions block of describe node carries the kubelet's own message.","A kubelet that never finished starting can only explain itself in the journal."],
+      "solution":[
+        {"cmd":"kubectl describe node worker-2 | sed -n '/Conditions/,/Addresses/p'","why":"Ready=False carries a message naming the cause — kubelet not posting status, disk pressure, or network not ready."},
+        {"cmd":"ssh worker-2 'systemctl is-active kubelet; sudo journalctl -u kubelet --no-pager -n 50'","why":"The journal is the only place a kubelet that crashed on startup reports its config error."},
+        {"cmd":"ssh worker-2 'sudo systemctl restart kubelet && sudo systemctl enable kubelet'","why":"If the unit was simply stopped, this is the whole fix; enable makes it survive a reboot."},
+        {"cmd":"ssh worker-2 'ls /etc/cni/net.d/ && df -h /var/lib/kubelet'","why":"Covers the other two branches: an empty CNI directory gives 'network plugin is not ready', and a full disk gives DiskPressure."}
+      ],
+      "verify":["kubectl get nodes   # worker-2 Ready","kubectl get pods -A -o wide | grep worker-2"],
+      "gotcha":"If the journal shows a bad flag or a broken config edit, fix /var/lib/kubelet/config.yaml — restarting a kubelet with an invalid config just loops it in 'activating'."
+    },
+    {
+      "id":"tk-004","domain":"troubleshooting","title":"kubectl cannot reach the API server","points":10,"targetMinutes":9,
+      "context":"k8s-broken",
+      "scenario":"Every kubectl command fails with 'connection refused' on port 6443. You have SSH to the single control-plane node. Restore the cluster.",
+      "hints":["You have no kubectl, so no kubectl-based tool is available.","Control-plane components are files on disk."],
+      "solution":[
+        {"cmd":"ssh cp-1 'sudo ss -lntp | grep 6443'","why":"Distinguishes 'the server is down' from 'your kubeconfig points somewhere wrong'."},
+        {"cmd":"ssh cp-1 'ls -l /etc/kubernetes/manifests/'","why":"A missing kube-apiserver.yaml is the fastest possible fix — restore it and the kubelet starts the static Pod within ~20s."},
+        {"cmd":"ssh cp-1 'sudo crictl ps -a --name kube-apiserver'","why":"crictl talks to containerd directly, so it works with the API server dead."},
+        {"cmd":"ssh cp-1 'sudo crictl logs <id> 2>&1 | tail -30'","why":"The real error: an unknown flag, a bad certificate path, or etcd unreachable."},
+        {"cmd":"ssh cp-1 'sudo cp /etc/kubernetes/manifests/kube-apiserver.yaml /tmp/ && sudo vi /etc/kubernetes/manifests/kube-apiserver.yaml'","why":"Back up before editing — a second typo leaves you with no kubectl and no undo. Saving the file makes the kubelet recreate the Pod; there is nothing to restart."}
+      ],
+      "verify":["kubectl get nodes","kubectl get pods -n kube-system"],
+      "gotcha":"If the manifest looks correct, check etcd: the API server exits on startup when it cannot reach etcd, and the log says so plainly."
+    },
+    {
+      "id":"tk-005","domain":"troubleshooting","title":"Service returns nothing","points":6,"targetMinutes":5,
+      "context":"k8s-prod",
+      "scenario":"In namespace `shop`, Service `catalog` is reachable but every request times out. The Deployment `catalog` reports 3/3 Pods Running. Fix it.",
+      "hints":["Running is not the same as Ready.","Check endpoints before you check anything else."],
+      "solution":[
+        {"cmd":"kubectl get svc,endpoints catalog -n shop","why":"An empty ENDPOINTS column proves it is selection or readiness, not routing."},
+        {"cmd":"kubectl get pods -n shop --show-labels","why":"Compare the Pod labels against the Service selector character by character."},
+        {"cmd":"kubectl get pods -n shop   # READY column","why":"0/1 Ready Pods are excluded from endpoints, which presents as a networking fault."},
+        {"cmd":"kubectl describe pod <pod> -n shop | grep -A10 Readiness","why":"Port, path or scheme mismatch between the probe and what the app serves."},
+        {"cmd":"kubectl patch svc catalog -n shop -p '{\"spec\":{\"selector\":{\"app\":\"catalog\"}}}'","why":"If the fault is the selector, patching is faster and safer than editing."}
+      ],
+      "verify":["kubectl get endpoints catalog -n shop   # non-empty","kubectl run probe --image=busybox:1.36 --rm -it --restart=Never -n shop -- wget -qO- --timeout=2 catalog:80"],
+      "gotcha":"Also check targetPort against the port the container actually listens on — endpoints can be populated and still refuse connections."
+    },
+    {
+      "id":"tk-006","domain":"cluster-architecture","title":"Back up and restore etcd","points":10,"targetMinutes":8,
+      "context":"k8s-prod",
+      "scenario":"Take a snapshot of etcd to /opt/etcd-backup.db. Then restore the cluster from the pre-existing snapshot at /opt/snapshot-prior.db, leaving the original data directory untouched.",
+      "hints":["The certificate paths are in the etcd manifest — don't recall them, read them.","A restore is three steps and people reliably forget the second half of step two."],
+      "solution":[
+        {"cmd":"grep -E 'cert-file|key-file|trusted-ca-file|data-dir|listen-client-urls' /etc/kubernetes/manifests/etcd.yaml","why":"This cluster's own source of truth for every path you're about to pass to etcdctl."},
+        {"cmd":"ETCDCTL_API=3 etcdctl --endpoints=https://127.0.0.1:2379 --cacert=/etc/kubernetes/pki/etcd/ca.crt --cert=/etc/kubernetes/pki/etcd/server.crt --key=/etc/kubernetes/pki/etcd/server.key snapshot save /opt/etcd-backup.db","why":"etcd is mutual-TLS only; all three flags are mandatory or the rejection looks like an outage."},
+        {"cmd":"etcdctl --write-out=table snapshot status /opt/etcd-backup.db","why":"Proves the file is a readable snapshot before you move on."},
+        {"cmd":"sudo ETCDCTL_API=3 etcdctl snapshot restore /opt/snapshot-prior.db --data-dir=/var/lib/etcd-restore","why":"Restore into a NEW directory — 'leaving the original untouched' is usually part of the task, and overwriting the live dir is unrecoverable."},
+        {"cmd":"sudo cp /etc/kubernetes/manifests/etcd.yaml /tmp/ && sudo vi /etc/kubernetes/manifests/etcd.yaml","why":"Change BOTH the --data-dir flag and the etcd-data volume's hostPath.path. The flag is the container's view; the volume maps it to the host."},
+        {"cmd":"sudo crictl ps | grep etcd","why":"The kubelet recreates the static Pod on file change — wait for the new container, don't restart anything."}
+      ],
+      "verify":["kubectl get pods -A   # the objects from the snapshot are back","etcdctl --write-out=table snapshot status /opt/etcd-backup.db"],
+      "gotcha":"Editing only --data-dir makes etcd read an empty directory; editing only the volume makes it read the old data. Both restores 'succeed'."
+    },
+    {
+      "id":"tk-007","domain":"cluster-architecture","title":"Upgrade a control-plane node","points":10,"targetMinutes":10,
+      "context":"k8s-upgrade",
+      "scenario":"Upgrade the control-plane node `cp-1` from v1.34.x to v1.35.0, including kubelet and kubectl. Leave the worker nodes on their current version. The node must be schedulable when you finish.",
+      "hints":["The package repository URL is per-minor-version.","kubeadm does not upgrade the kubelet."],
+      "solution":[
+        {"cmd":"kubectl drain cp-1 --ignore-daemonsets","why":"Evicts workloads and cordons the node before its components restart."},
+        {"cmd":"sudo sed -i 's|v1.34|v1.35|' /etc/apt/sources.list.d/kubernetes.list && sudo apt-get update","why":"pkgs.k8s.io serves one minor version per repo URL; skip this and every version you ask for is 'not found'."},
+        {"cmd":"sudo apt-mark unhold kubeadm && sudo apt-get install -y kubeadm=1.35.0-1.1 && sudo apt-mark hold kubeadm","why":"The packages are pinned; without unhold, apt silently keeps the old version."},
+        {"cmd":"sudo kubeadm upgrade plan && sudo kubeadm upgrade apply v1.35.0","why":"'apply' rewrites the static Pod manifests — this is where the control plane actually changes. Only the first control-plane node uses apply."},
+        {"cmd":"sudo apt-mark unhold kubelet kubectl && sudo apt-get install -y kubelet=1.35.0-1.1 kubectl=1.35.0-1.1 && sudo apt-mark hold kubelet kubectl","why":"kubeadm never touches these; they are a separate upgrade."},
+        {"cmd":"sudo systemctl daemon-reload && sudo systemctl restart kubelet","why":"Loads the new unit config and starts the new binary."},
+        {"cmd":"kubectl uncordon cp-1","why":"The task says schedulable — forgetting uncordon loses the point after all the work."}
+      ],
+      "verify":["kubectl get nodes   # cp-1 Ready, VERSION v1.35.0, no SchedulingDisabled","kubectl get pods -n kube-system"],
+      "gotcha":"Only one minor version per upgrade. And every node other than the first control-plane node uses 'kubeadm upgrade node', not 'apply'."
+    },
+    {
+      "id":"tk-008","domain":"cluster-architecture","title":"Scoped RBAC for a ServiceAccount","points":7,"targetMinutes":6,
+      "context":"k8s-prod",
+      "scenario":"In namespace `ci`, create ServiceAccount `deployer`. It must be able to get, list, watch, create and update Deployments in `ci` only, and read Pod logs in `ci`. It must NOT be able to delete anything or see anything in other namespaces. Bind it to the existing Deployment `runner` in `ci`.",
+      "hints":["Two resources, one of them a sub-resource.","Prove it with impersonation, not by reading YAML."],
+      "solution":[
+        {"cmd":"kubectl create serviceaccount deployer -n ci","why":"The identity the Pod will present."},
+        {"cmd":"kubectl create role deployer -n ci --verb=get,list,watch,create,update --resource=deployments --resource=pods --resource=pods/log","why":"create role emits the right apiGroups for you (apps for Deployments, \"\" for Pods). pods/log is a distinct resource — granting pods does not grant logs."},
+        {"cmd":"kubectl create rolebinding deployer -n ci --role=deployer --serviceaccount=ci:deployer","why":"A RoleBinding keeps the grant inside one namespace, which is what 'in ci only' requires."},
+        {"cmd":"kubectl set serviceaccount deploy/runner deployer -n ci","why":"Patches the Pod template so the workload actually uses the identity — creating the SA alone changes nothing."}
+      ],
+      "verify":[
+        "kubectl auth can-i update deployments -n ci --as=system:serviceaccount:ci:deployer   # yes",
+        "kubectl auth can-i delete deployments -n ci --as=system:serviceaccount:ci:deployer   # no",
+        "kubectl auth can-i list deployments -n default --as=system:serviceaccount:ci:deployer   # no",
+        "kubectl auth can-i --list -n ci --as=system:serviceaccount:ci:deployer"
+      ],
+      "gotcha":"If a 'no' comes back as 'yes', look for a second binding — RBAC is additive and system:authenticated grants are easy to miss."
+    },
+    {
+      "id":"tk-009","domain":"cluster-architecture","title":"Install a component with Helm at a pinned version","points":6,"targetMinutes":6,
+      "context":"k8s-prod",
+      "scenario":"Install chart `metrics/metrics-server` version 3.12.1 as release `metrics` into a new namespace `observability`, with the value `args={--kubelet-insecure-tls}` set. Then confirm `kubectl top nodes` works.",
+      "hints":["Learn the key path before you guess it.","A missing --version silently installs the newest chart."],
+      "solution":[
+        {"cmd":"helm repo add metrics <url> && helm repo update","why":"The repo index has to exist locally before search/install can resolve a version."},
+        {"cmd":"helm search repo metrics/metrics-server --versions | head","why":"Confirms 3.12.1 is actually available under that name."},
+        {"cmd":"helm show values metrics/metrics-server --version 3.12.1 > /tmp/values.yaml","why":"The chart's defaults name every key you're allowed to set. Guessing key paths is the main way Helm tasks are lost."},
+        {"cmd":"helm install metrics metrics/metrics-server -n observability --create-namespace --version 3.12.1 --set 'args={--kubelet-insecure-tls}'","why":"--create-namespace avoids a separate step; braces are Helm's list syntax for --set."},
+        {"cmd":"helm list -n observability","why":"Confirms the release name, chart version and status in one line."}
+      ],
+      "verify":["helm list -A | grep metrics   # STATUS deployed, CHART metrics-server-3.12.1","kubectl get pods -n observability","kubectl top nodes"],
+      "gotcha":"If 'kubectl top' still fails, read the metrics-server Pod logs — a TLS error against the kubelet is exactly what that --set flag exists to fix."
+    },
+    {
+      "id":"tk-010","domain":"cluster-architecture","title":"Find and use a custom resource","points":5,"targetMinutes":5,
+      "context":"k8s-prod",
+      "scenario":"An operator was installed in namespace `db-operator`. Nothing it should manage is being created. Diagnose the failure and write the offending message to /opt/answers/operator.txt. Also list the custom kinds it registered, with their API group, to /opt/answers/kinds.txt.",
+      "hints":["There is a fixed order for debugging an operator.","api-resources answers 'what kinds did this add' without a browser."],
+      "solution":[
+        {"cmd":"kubectl get crds | grep -i db","why":"Step 1: are the CRDs registered at all? If not, the bundle didn't fully apply."},
+        {"cmd":"kubectl api-resources --api-group=<group> > /opt/answers/kinds.txt","why":"Gives the plural name, short name, namespaced flag and kind — everything you need to create an instance."},
+        {"cmd":"kubectl get pods -n db-operator","why":"Step 2: is the controller actually running? CrashLoop or ImagePullBackOff answers the whole task."},
+        {"cmd":"kubectl logs deploy/<operator> -n db-operator --tail=30 | tee /opt/answers/operator.txt","why":"Step 3: the controller narrates its own failure — usually an RBAC denial on the resources it watches."},
+        {"cmd":"kubectl explain <kind> --recursive | head -40","why":"The schema, offline and version-correct, for whatever instance you now have to create."}
+      ],
+      "verify":["cat /opt/answers/operator.txt","cat /opt/answers/kinds.txt","kubectl get pods -n db-operator   # Running"],
+      "gotcha":"'the server doesn't have a resource type' means the CRD is missing, not that your YAML is wrong. And never delete a CRD to 'reinstall it' — that deletes every instance cluster-wide."
+    },
+    {
+      "id":"tk-011","domain":"services-networking","title":"Default-deny plus one allowed path","points":8,"targetMinutes":7,
+      "context":"k8s-prod",
+      "scenario":"In namespace `prod`, deny all ingress and egress traffic by default, then allow Pods labelled `app=web` to reach Pods labelled `app=db` on TCP 5432 only. DNS must keep working for every Pod in the namespace.",
+      "hints":["Two policies, not one.","A full egress deny breaks DNS unless you allow it back."],
+      "solution":[
+        {"cmd":"kubectl explain networkpolicy.spec --recursive | head -40","why":"Faster than the docs tab, and always the right schema version."},
+        {"cmd":"cat > deny.yaml   # podSelector: {} + policyTypes: [Ingress, Egress]","why":"An empty podSelector selects every Pod; naming a policyType with no rules denies that direction."},
+        {"cmd":"cat > allow-web-db.yaml   # podSelector app=db, ingress from podSelector app=web, port 5432","why":"Policies are additive, so this one re-opens exactly one path through the deny-all."},
+        {"cmd":"cat > allow-dns.yaml   # podSelector: {}, egress to kube-system, ports 53/UDP and 53/TCP","why":"A blanket egress deny blocks CoreDNS, and every symptom afterwards looks like a DNS outage."},
+        {"cmd":"kubectl apply -f deny.yaml -f allow-web-db.yaml -f allow-dns.yaml","why":"Apply together so the namespace is never left in the deny-only state longer than necessary."}
+      ],
+      "verify":[
+        "kubectl get netpol -n prod",
+        "kubectl run probe --image=busybox:1.36 --rm -it --restart=Never -n prod --labels=app=web -- sh -c 'nslookup db; nc -zv db 5432'",
+        "kubectl run probe2 --image=busybox:1.36 --rm -it --restart=Never -n prod --labels=app=other -- sh -c 'nc -zv -w2 db 5432 || echo BLOCKED'"
+      ],
+      "gotcha":"Under `from:`, two dashes mean OR and one dash means AND. And if traffic still flows, check whether the CNI implements NetworkPolicy at all — the object applies cleanly either way."
+    },
+    {
+      "id":"tk-012","domain":"services-networking","title":"Expose an app through Ingress","points":6,"targetMinutes":6,
+      "context":"k8s-prod",
+      "scenario":"Deployment `storefront` in namespace `shop` listens on container port 8080. Expose it internally on port 80, then route `shop.example.com/` to it through the existing nginx Ingress controller. Requests to /api must go to Service `api` on port 8080 instead.",
+      "hints":["Both the Service and the Ingress have imperative forms.","Longest-prefix wins; order in the file does not."],
+      "solution":[
+        {"cmd":"kubectl expose deploy storefront -n shop --port=80 --target-port=8080","why":"Copies the Deployment's own labels into the selector — the field most often typo'd by hand."},
+        {"cmd":"kubectl get endpoints storefront -n shop","why":"Confirm the selector matched before layering an Ingress on top of nothing."},
+        {"cmd":"kubectl create ingress storefront -n shop --class=nginx --rule=\"shop.example.com/api*=api:8080\" --rule=\"shop.example.com/*=storefront:80\"","why":"The rule syntax is host/path=service:port; a * suffix sets pathType: Prefix. One command, both rules."},
+        {"cmd":"kubectl describe ingress storefront -n shop","why":"Shows the resolved backends and whether the controller has assigned an ADDRESS."}
+      ],
+      "verify":["kubectl get ingress -n shop   # ADDRESS populated","kubectl get endpoints storefront api -n shop","curl -H 'Host: shop.example.com' http://<ingress-address>/"],
+      "gotcha":"No ADDRESS means no controller is watching, or ingressClassName doesn't match one. A 503 means the backend Service has no endpoints — a different problem entirely."
+    },
+    {
+      "id":"tk-013","domain":"services-networking","title":"Route traffic with the Gateway API","points":7,"targetMinutes":7,
+      "context":"k8s-prod",
+      "scenario":"A Gateway named `edge` exists in namespace `infra` with an HTTP listener on port 80. Create an HTTPRoute in namespace `shop` that sends `shop.example.com/checkout` to Service `checkout:8080`. The route is not attaching — find out why and fix it.",
+      "hints":["Gateway API reports acceptance explicitly, unlike Ingress.","Cross-namespace attachment is not allowed by default."],
+      "solution":[
+        {"cmd":"kubectl get gatewayclass,gateway -A","why":"Confirm the Gateway exists and is Programmed before blaming the route."},
+        {"cmd":"kubectl apply -f httproute.yaml   # parentRefs: name edge, namespace infra","why":"parentRefs is what binds a route to a Gateway; the namespace field is required for a cross-namespace parent."},
+        {"cmd":"kubectl describe httproute checkout -n shop","why":"status.parents[].conditions names the failure — NotAllowedByListeners or NoMatchingParent."},
+        {"cmd":"kubectl patch gateway edge -n infra --type=json -p='[{\"op\":\"replace\",\"path\":\"/spec/listeners/0/allowedRoutes/namespaces/from\",\"value\":\"All\"}]'","why":"A listener's allowedRoutes.namespaces defaults to Same, which is exactly why a cross-namespace route silently fails to attach."}
+      ],
+      "verify":["kubectl describe httproute checkout -n shop | grep -A5 Conditions   # Accepted True","kubectl get httproute -A"],
+      "gotcha":"If 'kubectl get gateway' says the server has no such resource type, the Gateway API CRDs aren't installed — they don't ship with Kubernetes."
+    },
+    {
+      "id":"tk-014","domain":"workloads-scheduling","title":"Roll, break, and roll back","points":6,"targetMinutes":5,
+      "context":"k8s-prod",
+      "scenario":"Update Deployment `web` in namespace `shop` to image nginx:1.27, ensuring no capacity is lost during the rollout. The new image fails to start — roll back to the previous revision and record the revision number you returned to in /opt/answers/rollback.txt.",
+      "hints":["Zero downtime is a two-field answer.","History is numbered; undo without an argument goes back exactly one."],
+      "solution":[
+        {"cmd":"kubectl patch deploy web -n shop -p '{\"spec\":{\"strategy\":{\"rollingUpdate\":{\"maxSurge\":1,\"maxUnavailable\":0}}}}'","why":"maxUnavailable: 0 forces a new Pod Ready before an old one goes — that is what 'no capacity lost' means."},
+        {"cmd":"kubectl set image deploy/web -n shop nginx=nginx:1.27","why":"Patches one field, triggers exactly one rollout, no editor."},
+        {"cmd":"kubectl rollout status deploy/web -n shop --timeout=60s","why":"It will not converge; that is the signal to stop waiting rather than sitting on it for the full progress deadline."},
+        {"cmd":"kubectl rollout history deploy/web -n shop","why":"Read the revision numbers before undoing so you can record the right one."},
+        {"cmd":"kubectl rollout undo deploy/web -n shop && kubectl rollout history deploy/web -n shop | tail -3 > /opt/answers/rollback.txt","why":"undo without --to-revision goes back exactly one revision."}
+      ],
+      "verify":["kubectl rollout status deploy/web -n shop   # successfully rolled out","kubectl get deploy web -n shop -o jsonpath='{.spec.template.spec.containers[0].image}'","cat /opt/answers/rollback.txt"],
+      "gotcha":"A rollout that hangs with new Pods Running but 0/1 is a readiness probe, not the image — and with maxUnavailable: 0 it blocks forever rather than degrading."
+    },
+    {
+      "id":"tk-015","domain":"workloads-scheduling","title":"Config, autoscaling and admission","points":8,"targetMinutes":8,
+      "context":"k8s-prod",
+      "scenario":"In namespace `dev`: create ConfigMap `app-cfg` from the file /opt/app.env so that each line becomes its own key; inject all of its keys into Deployment `api` as environment variables; then autoscale `api` between 2 and 8 replicas at 70% CPU. Creating the HPA is not enough — make sure it can actually compute a target.",
+      "hints":["Two --from flags exist and they do different things.","A CPU percentage needs a denominator."],
+      "solution":[
+        {"cmd":"kubectl create configmap app-cfg -n dev --from-env-file=/opt/app.env","why":"--from-env-file gives one key per KEY=value line; --from-file would give a single key holding the whole file."},
+        {"cmd":"kubectl set env deploy/api -n dev --from=configmap/app-cfg","why":"Writes envFrom correctly in one command — configMapRef with a capital M is a common hand-authoring typo."},
+        {"cmd":"kubectl set resources deploy/api -n dev --requests=cpu=100m,memory=128Mi","why":"--cpu-percent is a percentage OF the request. With no request there is no denominator and the HPA shows <unknown> forever."},
+        {"cmd":"kubectl autoscale deploy api -n dev --min=2 --max=8 --cpu-percent=70","why":"One command; no HPA manifest needed."}
+      ],
+      "verify":["kubectl get cm app-cfg -n dev -o jsonpath='{.data}'","kubectl set env deploy/api -n dev --list","kubectl get hpa -n dev   # TARGETS shows a number, not <unknown>","kubectl rollout status deploy/api -n dev"],
+      "gotcha":"If TARGETS stays <unknown> after adding requests, check that metrics-server is installed — kubectl top will fail the same way."
+    },
+    {
+      "id":"tk-016","domain":"storage","title":"Static PV, PVC and a Pod that uses it","points":6,"targetMinutes":6,
+      "context":"k8s-prod",
+      "scenario":"Create a 2Gi PersistentVolume named `pv-logs` backed by hostPath /mnt/logs, class `manual`, retained on delete. Create a 1Gi PVC named `pvc-logs` in namespace `ops` that binds to it, and a Pod `logger` mounting it at /var/log/app. The PVC must not use the cluster's default StorageClass.",
+      "hints":["Nothing here has an imperative generator.","'Must not use the default class' is an instruction about one specific field."],
+      "solution":[
+        {"cmd":"kubectl explain pv.spec --recursive | head -30","why":"PV, PVC and StorageClass are the three kinds with no kubectl generator, so explain is your schema."},
+        {"cmd":"cat > pv.yaml   # capacity 2Gi, accessModes [ReadWriteOnce], persistentVolumeReclaimPolicy Retain, storageClassName manual, hostPath /mnt/logs","why":"Retain keeps the data when the claim goes; the class name is what steers the binding."},
+        {"cmd":"cat > pvc.yaml   # requests 1Gi, accessModes [ReadWriteOnce], storageClassName manual","why":"2Gi >= 1Gi, modes match, class matches exactly — those three conditions are the whole binding rule, and naming the class is what avoids the default."},
+        {"cmd":"kubectl apply -f pv.yaml -f pvc.yaml && kubectl get pv,pvc -n ops","why":"Confirm Bound before building a Pod on top of an unbound claim."},
+        {"cmd":"kubectl run logger --image=busybox:1.36 --dry-run=client -o yaml -- sleep 3600 > pod.yaml   # add volumes + volumeMounts","why":"Generate the skeleton and add only the two stanzas rather than typing a Pod from memory."}
+      ],
+      "verify":["kubectl get pvc -n ops   # STATUS Bound, VOLUME pv-logs","kubectl get pv   # RECLAIM POLICY Retain, CLAIM ops/pvc-logs","kubectl exec logger -n ops -- df -h /var/log/app"],
+      "gotcha":"storageClassName: \"\" is not the same as omitting the field. Omitting it silently pulls in the default class, which is exactly what this task forbids."
+    },
+    {
+      "id":"tk-017","domain":"storage","title":"PVC stuck Pending","points":5,"targetMinutes":5,
+      "context":"k8s-prod",
+      "scenario":"PVC `data` in namespace `analytics` has been Pending for 20 minutes and the Pod that wants it is stuck ContainerCreating. Diagnose and fix it without creating a new StorageClass.",
+      "hints":["The PVC's events name the cause in plain English.","One of the possible messages is not a fault at all."],
+      "solution":[
+        {"cmd":"kubectl describe pvc data -n analytics | sed -n '/Events/,$p'","why":"Four distinct messages map to four distinct causes; this read decides the branch immediately."},
+        {"cmd":"kubectl get sc -o custom-columns=NAME:.metadata.name,PROV:.provisioner,BIND:.volumeBindingMode","why":"'no-provisioner' means static binding only — no PVC will ever auto-provision against it."},
+        {"cmd":"kubectl get pv","why":"If an Available PV exists, the fault is a mismatch: size, access modes, or class."},
+        {"cmd":"kubectl patch pv pv-data -p '{\"spec\":{\"claimRef\": null}}'","why":"A Released PV still points at its old claim; clearing claimRef returns it to Available so it can bind again."}
+      ],
+      "verify":["kubectl get pvc data -n analytics   # Bound","kubectl get pods -n analytics   # Running"],
+      "gotcha":"'waiting for first consumer to be created before binding' is WaitForFirstConsumer working correctly — the fix there is to schedule the consuming Pod, not to touch storage."
+    }
+  ]
+}

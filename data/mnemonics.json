@@ -1,0 +1,186 @@
+{
+  "$schema": "one memory aid per object; `sequence` items are ordered and drilled in order",
+  "items": [
+    {
+      "id": "mn-kubeadm-upgrade",
+      "domain": "cluster-architecture",
+      "title": "kubeadm upgrade order",
+      "mnemonic": "DUPA-KRU — Drain, Unhold, Plan, Apply, Kubelet, Restart, Uncordon",
+      "sequence": [
+        { "key": "D", "text": "Drain the node (--ignore-daemonsets)" },
+        { "key": "U", "text": "Unhold + install the new kubeadm, then hold again" },
+        { "key": "P", "text": "Plan — kubeadm upgrade plan" },
+        { "key": "A", "text": "Apply — 'upgrade apply vX.Y.Z' on the FIRST control-plane node; 'upgrade node' on every other node" },
+        { "key": "K", "text": "Kubelet + kubectl: unhold, install, hold" },
+        { "key": "R", "text": "Restart — daemon-reload && systemctl restart kubelet" },
+        { "key": "U", "text": "Uncordon the node" }
+      ],
+      "why": "kubeadm is only an installer: the binary upgrade does nothing until 'upgrade apply' rewrites the static Pod manifests, and kubeadm never touches the kubelet package, which is why K and R are separate steps you do by hand."
+    },
+    {
+      "id": "mn-etcd-restore",
+      "domain": "cluster-architecture",
+      "title": "etcd restore — the two edits",
+      "mnemonic": "Restore, then change BOTH: the flag and the volume",
+      "sequence": [
+        { "key": "1", "text": "etcdctl snapshot restore <file> --data-dir=/var/lib/etcd-restore" },
+        { "key": "2", "text": "etcd.yaml: --data-dir=/var/lib/etcd-restore  (the container's view)" },
+        { "key": "3", "text": "etcd.yaml: volumes[etcd-data].hostPath.path=/var/lib/etcd-restore  (the host's view)" },
+        { "key": "4", "text": "Wait — the kubelet recreates the static Pod on file change. Restart nothing." }
+      ],
+      "why": "--data-dir is a path inside the container and the hostPath volume is what maps it to disk. Change one without the other and the restore appears to succeed while etcd serves the old data."
+    },
+    {
+      "id": "mn-etcd-certs",
+      "domain": "cluster-architecture",
+      "title": "etcdctl's three mandatory TLS flags",
+      "mnemonic": "CA, Cert, Key — Can't Connect Keyless",
+      "sequence": [
+        { "key": "--cacert", "text": "/etc/kubernetes/pki/etcd/ca.crt" },
+        { "key": "--cert", "text": "/etc/kubernetes/pki/etcd/server.crt" },
+        { "key": "--key", "text": "/etc/kubernetes/pki/etcd/server.key" },
+        { "key": "--endpoints", "text": "https://127.0.0.1:2379" }
+      ],
+      "why": "etcd speaks mutual TLS only. Omit any of the three and the rejection looks exactly like an outage. If you blank on the paths, grep them out of /etc/kubernetes/manifests/etcd.yaml."
+    },
+    {
+      "id": "mn-pod-pending",
+      "domain": "troubleshooting",
+      "title": "Pod is Pending — the four causes",
+      "mnemonic": "CTAP — Capacity, Taints, Affinity, PVC",
+      "sequence": [
+        { "key": "C", "text": "Capacity: 'Insufficient cpu/memory' — requests exceed what's allocatable" },
+        { "key": "T", "text": "Taints: 'had untolerated taint'" },
+        { "key": "A", "text": "Affinity: 'didn't match Pod's node affinity/selector'" },
+        { "key": "P", "text": "PVC unbound, or no events at all → the scheduler itself is down" }
+      ],
+      "why": "The scheduler writes the failed predicate verbatim into the FailedScheduling event, so describe answers this in one read. No events at all is the tell that nothing is scheduling anything."
+    },
+    {
+      "id": "mn-rbac-shape",
+      "domain": "cluster-architecture",
+      "title": "Which RBAC pair?",
+      "mnemonic": "Namespaced resource → Role. Cluster-scoped resource → ClusterRole. Reusable definition, one namespace → ClusterRole + RoleBinding.",
+      "sequence": [
+        { "key": "Role + RoleBinding", "text": "namespaced resources, one namespace" },
+        { "key": "ClusterRole + ClusterRoleBinding", "text": "cluster-scoped resources (nodes, PVs, namespaces, CRDs) or every namespace" },
+        { "key": "ClusterRole + RoleBinding", "text": "define once, grant only inside one namespace" },
+        { "key": "Role + ClusterRoleBinding", "text": "does not exist — invalid" }
+      ],
+      "why": "The binding's kind decides the scope of the grant; the role's kind decides where the definition can live. That's why the third combination is legal and the fourth is not."
+    },
+    {
+      "id": "mn-rbac-verbs",
+      "domain": "cluster-architecture",
+      "title": "RBAC verbs",
+      "mnemonic": "GLW-CUP-D-E — Get List Watch, Create Update Patch, Delete, and the odd ones",
+      "sequence": [
+        { "key": "Read", "text": "get, list, watch" },
+        { "key": "Write", "text": "create, update, patch" },
+        { "key": "Remove", "text": "delete, deletecollection" },
+        { "key": "Odd", "text": "* (all), plus non-resource URLs via nonResourceURLs" }
+      ],
+      "why": "'get' fetches one object by name and does NOT imply 'list'. A role with get but not list makes 'kubectl get pods' fail while 'kubectl get pod web' works — a classic partially-correct answer."
+    },
+    {
+      "id": "mn-taint-effects",
+      "domain": "workloads-scheduling",
+      "title": "Taint effects",
+      "mnemonic": "NoSchedule keeps them out. PreferNoSchedule asks nicely. NoExecute throws them out.",
+      "sequence": [
+        { "key": "NoSchedule", "text": "no new Pods without a toleration; existing Pods stay" },
+        { "key": "PreferNoSchedule", "text": "soft — the scheduler avoids the node if it can" },
+        { "key": "NoExecute", "text": "as NoSchedule, and evicts running Pods that don't tolerate it" }
+      ],
+      "why": "'Make the existing Pods leave' is NoExecute. NoSchedule alone looks like it did nothing, because it only affects future scheduling."
+    },
+    {
+      "id": "mn-probes",
+      "domain": "workloads-scheduling",
+      "title": "The three probes",
+      "mnemonic": "Liveness restarts. Readiness removes from endpoints. Startup buys time.",
+      "sequence": [
+        { "key": "livenessProbe", "text": "fails → container restarted" },
+        { "key": "readinessProbe", "text": "fails → Pod removed from Service endpoints, NOT restarted" },
+        { "key": "startupProbe", "text": "disables the other two until it first succeeds" }
+      ],
+      "why": "A failing readiness probe presents as a networking bug — the Service has no endpoints — because unready Pods are excluded from endpoints. Without a startupProbe, a slow-booting app is killed by its own liveness probe in a loop that looks like a crash."
+    },
+    {
+      "id": "mn-pv-bind",
+      "domain": "storage",
+      "title": "Why a PVC binds (or doesn't)",
+      "mnemonic": "SAC — Size, Access modes, Class. All three, or nothing binds.",
+      "sequence": [
+        { "key": "S", "text": "PV capacity >= PVC request" },
+        { "key": "A", "text": "PV accessModes is a superset of the PVC's" },
+        { "key": "C", "text": "storageClassName matches EXACTLY — including the empty string" }
+      ],
+      "why": "storageClassName: \"\" means 'no class, static binding only' and is not the same as omitting the field, which means 'use the default class'. With no default class, omitting it leaves the PVC Pending forever."
+    },
+    {
+      "id": "mn-access-modes",
+      "domain": "storage",
+      "title": "Access modes",
+      "mnemonic": "RWO is per NODE, not per Pod. That's why RWOP exists.",
+      "sequence": [
+        { "key": "RWO", "text": "ReadWriteOnce — read-write by Pods on one node (several Pods on that node is fine)" },
+        { "key": "ROX", "text": "ReadOnlyMany — read-only from many nodes" },
+        { "key": "RWX", "text": "ReadWriteMany — read-write from many nodes; needs NFS/CephFS-class backing" },
+        { "key": "RWOP", "text": "ReadWriteOncePod — exactly one Pod cluster-wide" }
+      ],
+      "why": "The 'Once' in ReadWriteOnce counts nodes. Reading it as 'one Pod' is the most common wrong answer about storage."
+    },
+    {
+      "id": "mn-netpol-and-or",
+      "domain": "services-networking",
+      "title": "NetworkPolicy: one dash changes the meaning",
+      "mnemonic": "Two dashes = OR. One dash = AND.",
+      "sequence": [
+        { "key": "OR", "text": "- podSelector: {...}\\n- namespaceSelector: {...}   → web Pods, or anything in that namespace" },
+        { "key": "AND", "text": "- podSelector: {...}\\n  namespaceSelector: {...}   → web Pods that are in that namespace" },
+        { "key": "Deny-all", "text": "podSelector: {} selects every Pod; policyTypes with no matching rules denies that direction" },
+        { "key": "Additive", "text": "multiple policies are UNIONed — there is no deny rule in NetworkPolicy" }
+      ],
+      "why": "Entries in the 'from' list are separate peers (OR); selectors inside a single entry must all match the same peer (AND). Indentation is the only thing distinguishing them."
+    },
+    {
+      "id": "mn-dns-names",
+      "domain": "services-networking",
+      "title": "Cluster DNS names",
+      "mnemonic": "service.namespace.svc.cluster.local — always four labels after the name",
+      "sequence": [
+        { "key": "Service", "text": "<service>.<namespace>.svc.cluster.local" },
+        { "key": "StatefulSet Pod", "text": "<pod>.<headless-service>.<namespace>.svc.cluster.local" },
+        { "key": "Pod", "text": "<pod-ip-with-dashes>.<namespace>.pod.cluster.local" }
+      ],
+      "why": "Test with the FQDN. Short names depend on the search list in the Pod's /etc/resolv.conf, so a short-name failure may mean 'wrong namespace', not 'DNS is broken'."
+    },
+    {
+      "id": "mn-drain-flags",
+      "domain": "cluster-architecture",
+      "title": "Why drain refuses",
+      "mnemonic": "DEF — DaemonSets, EmptyDir, Free-standing pods",
+      "sequence": [
+        { "key": "D", "text": "DaemonSet Pods can't be evicted → --ignore-daemonsets" },
+        { "key": "E", "text": "emptyDir data would be destroyed → --delete-emptydir-data" },
+        { "key": "F", "text": "Free-standing (uncontrolled) Pods won't come back → --force" },
+        { "key": "+", "text": "Hangs forever on 'would violate the disruption budget' → a PodDisruptionBudget, not a bug" }
+      ],
+      "why": "Each refusal names its own cause in the error text. The PDB case is the one that hangs instead of erroring, which is why it reads as a broken command."
+    },
+    {
+      "id": "mn-static-pods",
+      "domain": "troubleshooting",
+      "title": "Static Pods",
+      "mnemonic": "File on disk, kubelet runs it, no scheduler, no kubectl delete.",
+      "sequence": [
+        { "key": "Where", "text": "/etc/kubernetes/manifests/ (staticPodPath in /var/lib/kubelet/config.yaml)" },
+        { "key": "Who", "text": "the kubelet, directly — the API server is not involved" },
+        { "key": "Restart", "text": "there is none; edit the file and the kubelet recreates the Pod" },
+        { "key": "Delete", "text": "move the file out of the directory; kubectl delete just recreates it" }
+      ],
+      "why": "This is exactly why a dead control plane is repairable: kube-apiserver, etcd, scheduler and controller-manager are static Pods, so they can be fixed from disk with no working API server."
+    }
+  ]
+}
