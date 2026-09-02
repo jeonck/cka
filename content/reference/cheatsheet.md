@@ -69,9 +69,11 @@ kubectl create poddisruptionbudget pdb --selector=app=web --min-available=2 $do
 ```
 
 <div class="callout">
+
 There is **no** imperative generator for: PersistentVolume, PersistentVolumeClaim, StorageClass, NetworkPolicy,
-DaemonSet, StatefulSet, Gateway, HTTPRoute, or tolerations/affinity stanzas. Those four manifests plus the two Gateway
-API kinds are the memorisation list — everything else you can generate.
+DaemonSet, StatefulSet, Gateway, HTTPRoute, or tolerations/affinity stanzas. That list is your memorisation set —
+everything else on this page you can generate.
+
 </div>
 
 ---

@@ -41,9 +41,11 @@ kubectl get sc -o custom-columns=NAME:.metadata.name,PROV:.provisioner,BIND:.vol
 looking healthy.
 
 <div class="callout warn">
+
 **Trap:** `storageClassName: ""` means "explicitly no class, static binding only" and is **not** the same as omitting
 the field, which means "use the default StorageClass". If there's no default class, omitting it leaves the PVC Pending
 forever.
+
 </div>
 
 ```bash

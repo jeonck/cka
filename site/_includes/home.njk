@@ -8,7 +8,7 @@ layout: base.njk
   The exam is {{ site.examMinutes }} minutes for roughly {{ site.examTasks }} performance-based tasks at {{ site.passMark }}% to pass —
   about seven minutes each, including reading, context switching, and verifying.</p>
   <div class="weights">
-    {% for d in domains %}<a href="{{ d.url }}" style="flex: {{ d.weight }}" title="{{ d.title }} — {{ d.weight }}%">{{ d.weight }}%</a>{% endfor %}
+    {% for d in domains %}<a href="{{ d.url }}" style="flex-grow: {{ d.weight }}" title="{{ d.title }} — {{ d.weight }}%">{{ d.weight }}%</a>{% endfor %}
   </div>
   <p class="small muted">Domain weights, to scale. Troubleshooting alone is 30% — nearly a third of the exam.</p>
   <div class="toolbar">

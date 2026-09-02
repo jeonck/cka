@@ -24,6 +24,7 @@ kubectl config current-context
 ```
 
 *Why:* a perfect fix on the wrong cluster scores zero, and nothing in the environment will tell you.
+
 </div>
 
 ---
@@ -202,8 +203,10 @@ and why editing the manifest is the fix: the kubelet notices the file change and
 is no `systemctl restart kube-apiserver`.
 
 <div class="callout warn">
+
 **Trap:** always `cp /etc/kubernetes/manifests/kube-apiserver.yaml /tmp/` before editing. A typo'd flag makes the API
 server crash-loop, and now you're editing YAML with no `kubectl` and no undo.
+
 </div>
 
 ---
@@ -318,8 +321,10 @@ kubectl logs <pod> -n <ns> > /opt/answer.txt   # tasks often want the output wri
 even when the container has exited — but only for the current and previous instance.
 
 <div class="callout warn">
+
 **Trap:** when a task says "write the log lines containing X to /opt/file", do it with `grep` and check the file:
 `kubectl logs <pod> | grep X > /opt/file && cat /opt/file`. Silent empty files are a common own-goal.
+
 </div>
 
 ---

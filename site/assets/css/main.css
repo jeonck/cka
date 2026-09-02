@@ -87,7 +87,8 @@ a:hover { text-decoration: underline; }
 .prose p, .prose li { overflow-wrap: break-word; }
 .prose ul, .prose ol { padding-left: 1.3em; }
 .prose li { margin: 4px 0; }
-.prose hr { border: 0; border-top: 1px solid var(--line); margin: 34px 0; }
+.prose hr { border: 0; border-top: 1px solid var(--line); margin: 34px 0 0; }
+.prose hr + h2 { border-top: 0; padding-top: 0; margin-top: 26px; }
 .prose blockquote { margin: 18px 0; padding: 2px 16px; border-left: 3px solid var(--line); color: var(--fg-dim); }
 .prose em { color: var(--fg-dim); font-style: italic; }
 
@@ -182,7 +183,7 @@ details[open] > summary { margin-bottom: 8px; }
 .hero h1 { margin: 0 0 8px; font-size: clamp(1.8rem, 1.3rem + 2vw, 2.6rem); letter-spacing: -0.025em; }
 .hero p { margin: 0 0 6px; color: var(--fg-dim); max-width: 62ch; }
 .weights { display: flex; gap: 3px; margin: 20px 0 8px; height: 30px; border-radius: 7px; overflow: hidden; }
-.weights a { display: grid; place-items: center; font-size: 12px; font-weight: 600; color: var(--bg); background: var(--accent); opacity: 0.9; }
+.weights a { flex-basis: 0; flex-shrink: 0; display: grid; place-items: center; font-size: 12px; font-weight: 600; color: var(--bg); background: var(--accent); opacity: 0.9; }
 .weights a:hover { opacity: 1; text-decoration: none; }
 
 /* ---------- responsive ---------- */

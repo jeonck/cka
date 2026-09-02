@@ -92,9 +92,11 @@ spec:
 ```
 
 <div class="callout warn">
+
 **The list-indentation trap.** Under `from:`, two entries at the same level are **OR** ("web Pods, or anything in
 staging"). Putting `namespaceSelector` and `podSelector` under a *single* `-` makes them **AND** ("web Pods that are in
 staging"). One dash changes the meaning. Read the task's wording carefully and check your indentation before applying.
+
 </div>
 
 ```bash
@@ -231,8 +233,10 @@ didn't attach says so in `status.parents[].conditions` — usually `NotAllowedBy
 `allowedRoutes.namespaces` doesn't permit your namespace) or `NoMatchingParent`.
 
 <div class="callout">
+
 Gateway API CRDs are **not** installed by default. `kubectl get gateway` returning
 `the server doesn't have a resource type "gateway"` means the CRDs are missing, not that your YAML is wrong.
+
 </div>
 
 ---

@@ -83,8 +83,10 @@ kubectl set serviceaccount deploy/web app-sa -n dev
 ```
 
 <div class="callout warn">
+
 **Trap:** RBAC is purely additive — there are no deny rules. If a subject can still do the thing, look for a *second*
 binding (often to `system:authenticated` or a group) rather than trying to subtract from the one you found.
+
 </div>
 
 ---
@@ -121,6 +123,7 @@ etcdctl --write-out=table snapshot status /opt/etcd-backup.db   # verify
 looks like an outage but is your own client being rejected.
 
 <div class="callout">
+
 **Don't memorise the cert paths — read them off the running Pod:**
 
 ```bash
@@ -128,6 +131,7 @@ grep -E 'cert-file|key-file|trusted-ca-file|data-dir|listen-client-urls' \
   /etc/kubernetes/manifests/etcd.yaml
 ```
 That file is the source of truth for this cluster and takes ten seconds.
+
 </div>
 
 ### Restore
@@ -209,10 +213,12 @@ and restarted by hand afterwards. `apt-mark hold` exists because the packages ar
 forgetting `unhold` makes `apt-get install` silently keep the old version.
 
 <div class="callout warn">
+
 **Traps:** you may only upgrade **one minor version at a time** (1.33 → 1.34 → 1.35, never 1.33 → 1.35). `upgrade apply`
 runs on the first control-plane node only; every other node — control plane or worker — uses `upgrade node`. And the
 `pkgs.k8s.io` apt repository URL is per-minor-version, so skipping the `sed` makes every `apt-get install` fail to find
 the version you asked for.
+
 </div>
 
 ### Join a new node
@@ -427,8 +433,10 @@ kubectl get <customkind> -A                          # 4. does it act on instanc
 ```
 
 <div class="callout warn">
+
 **Trap:** deleting a CRD deletes **every custom resource of that kind**, cluster-wide, immediately. There is no
 confirmation.
+
 </div>
 
 ---
