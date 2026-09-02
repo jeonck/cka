@@ -59,13 +59,11 @@ jobs:
       - name: Regenerate the one-book PDF
         run: npm run build:pdf
 
+      # Requires Pages to be enabled with "GitHub Actions" as the source
+      # (Settings -> Pages). The action's `enablement: true` option cannot do
+      # that here: GITHUB_TOKEN gets "Resource not accessible by integration"
+      # when it tries to create the Pages site.
       - uses: actions/configure-pages@v5
-        # enablement turns Pages on and sets the source to GitHub Actions if it
-        # is not configured yet, so a fresh clone of this repo deploys without a
-        # manual visit to Settings -> Pages.
-        with:
-          enablement: true
-
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist

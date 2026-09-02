@@ -93,9 +93,13 @@ npm run test:smoke   # drive every study tool in headless Chromium
 `.github/workflows/deploy.yml` runs on every push to `main`: validate data → build → smoke-test → rebuild with the Pages
 path prefix → regenerate the PDF → deploy.
 
-The workflow passes `enablement: true` to `actions/configure-pages`, so it turns Pages on and sets the source to
-GitHub Actions by itself. If your organisation restricts that, do it by hand in *Settings → Pages* (**Source** →
-**GitHub Actions**) — without it the build succeeds and the deploy step fails with `Get Pages site failed`.
+**One manual step, and it must be done once before the first deploy succeeds:** in *Settings → Pages*, set **Source**
+to **GitHub Actions**.
+
+Until then the build, tests and PDF all pass and only the last step fails, with
+`Get Pages site failed`. The workflow cannot do this for you — `actions/configure-pages` has an `enablement: true`
+option, but `GITHUB_TOKEN` is refused with `Resource not accessible by integration` when it tries to create the Pages
+site, so enabling Pages stays an owner action.
 
 The workflow sets `PATH_PREFIX=/<repo-name>/` because a GitHub *project* page is served from a subdirectory. On a user
 page (`<owner>.github.io`) or a custom domain, drop that `env:` block.
