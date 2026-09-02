@@ -35,6 +35,10 @@ Everything is keyboard-driven — <kbd>Space</kbd> reveals, <kbd>1</kbd>–<kbd>
     <li><kbd>3</kbd> <b>Good</b> — the normal answer; ease unchanged.</li>
     <li><kbd>4</kbd> <b>Easy</b> — instant recall; ease rises and the interval stretches.</li>
   </ul>
+  <p class="muted">The number on each button is its <strong>keyboard shortcut</strong>, not a count. Underneath it is
+  when the item comes back if you press it.</p>
   <p class="muted">Intervals run 1 day, 6 days, then previous × ease. Ease starts at 2.5 and never falls below 1.3.
-  Grade honestly: an inflated grade buys you a card you will not see again before the exam.</p>
+  So a brand-new item shows <em>in 1 day</em> on all four buttons — at SM-2's first step only Again versus not-Again
+  changes anything, and the four intervals start separating from the third review onward. Grade honestly: an inflated
+  grade buys you a card you will not see again before the exam.</p>
 </details>

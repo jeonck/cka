@@ -92,6 +92,9 @@ deliverable.
 - **Cloze**: hide flags, field names and paths inside real manifests and commands. Mark blanks with a delimiter that
   cannot collide with template syntax — `[[like this]]`, never `{{ }}`.
 - **Mnemonics**: for what must be recalled cold — field ordering, the `kubeadm` upgrade sequence, RBAC verbs.
+- **Affordances**: render a keyboard shortcut as a key cap (`<kbd>`), never as `Label (1)` — that reads as a counter.
+  Where a control has a consequence the user cannot infer, put it on the control: a grade button should say when the
+  item returns, not just what the grade is called.
 - **Flashcards** driven by the spaced-repetition scheduler.
 
 Render the mnemonics *page* from the JSON rather than writing a second markdown copy. One source, two outputs.
@@ -171,6 +174,7 @@ Say which is which.
 | 11 | Callout `<div>`s swallowed their markdown — no blank line after the opening tag — and the build still passed | caught only by reading output | §10 names it as a silent failure to check for |
 | 12 | Two internal links pointed at pages that never existed, surviving the whole first build | shipped broken | §10 requires a link check |
 | 13 | Migration silently dropped the `h1` from all six tool pages | caught by audit | §10 requires the structural audit after templating changes |
+| 14 | Grade buttons rendered their keyboard shortcut as `Again (1)`, which reads as a counter — a user clicked them and asked why the number never went up | shipped confusing | §5 requires shortcuts rendered as key caps and controls labelled with their consequence, not just their name |
 
 ### What revision 1 got right, and this revision keeps unchanged
 

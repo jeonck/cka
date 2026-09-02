@@ -2,7 +2,7 @@
 // scheduled by the SM-2 queue in store.js.
 import { items, qs, el, esc, fmtDuration } from "./data.js";
 import * as store from "./store.js";
-import { GRADES } from "./srs.js";
+import { GRADES, schedule } from "./srs.js";
 import { card } from "./store.js";
 
 const mount = document.getElementById("review");
@@ -95,10 +95,21 @@ function render() {
   } else {
     const g = el("div", { class: "grades" });
     for (const gr of GRADES) {
-      g.append(el("button", { class: `btn ${gr.cls}`, title: gr.hint, onclick: () => grade(gr.q) },
-        `${gr.label} (${gr.key})`));
+      // schedule() is pure, so previewing each grade's interval costs nothing
+      // and makes the button say what it will actually do.
+      const next = schedule(c, gr.q);
+      g.append(el("button", {
+        class: `btn ${gr.cls}`,
+        title: gr.hint,
+        "aria-keyshortcuts": gr.key,
+        onclick: () => grade(gr.q),
+      },
+        el("span", { class: "glabel" }, gr.label, el("kbd", {}, gr.key)),
+        el("span", { class: "gnext" }, next.interval === 1 ? "in 1 day" : `in ${next.interval} days`)));
     }
     body.append(g);
+    body.append(el("p", { class: "small muted", style: "margin:8px 0 0" },
+      "Click a button, or press the key on it. The interval is when this item comes back."));
   }
 
   mount.append(body);
