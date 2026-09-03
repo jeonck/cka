@@ -47,7 +47,7 @@ reported seeing it on an exam.
 | **SM-2 scheduler** | Ease factor, interval and repetition count per item, driving both the flashcard and cloze queues. |
 | **Dashboard** | Per-domain mastery and time spent, sorted by *exam risk* — curriculum weight × distance from mastery — so the weakest high-weight domain always leads. |
 | **Study plan** | Target exam date in, daily workload out, with the last three days reserved for review only. |
-| **Exam bookmarks** | 77 exam-legal documentation links, ordered by domain weight, with the symptom that should send you to each. Downloadable as a Netscape bookmark file for the simulator, and printed into the PDF as a symptom→page index. |
+| **Exam bookmarks** | 77 exam-legal documentation links, ordered by domain weight, with the symptom that should send you to each — searchable by that symptom, which is the drill. Downloadable as a Netscape bookmark file for the simulator, and printed into the PDF as a symptom→page index. |
 | **One-book PDF** | 32 dense A4 pages generated from the same markdown and JSON as the site. |
 
 Seeded with real content for all five domains; **Troubleshooting (30%)** and **Cluster Architecture (25%)** — the two
@@ -160,7 +160,7 @@ layouts/
 static/
   CNAME                 cka.metacog.co.kr
   assets/css/main.css
-  assets/js/            srs.js store.js review.js practice.js dashboard.js plan.js datatool.js
+  assets/js/            srs.js store.js review.js practice.js dashboard.js plan.js datatool.js bookmarks.js
 scripts/
   build-pdf.mjs         markdown + JSON -> Chromium -> public/cka-reference.pdf
   build-bookmarks.mjs   bookmarks.json -> public/cka-bookmarks.html (Netscape format)

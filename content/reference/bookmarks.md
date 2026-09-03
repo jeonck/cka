@@ -1,5 +1,6 @@
 ---
 title: Exam Bookmarks
+script: bookmarks
 weight: 2
 summary: 77 exam-legal documentation links, ordered by domain weight — and an honest note about whether you can take them into the exam at all.
 ---
@@ -37,6 +38,12 @@ to load — that is the entire selection rule. Deep links land on the anchor wit
 the top of a long page.
 
 The folder names sort in order, so the bar reads left to right the way you should reach for them.
+
+**Search it the way the exam asks.** Type the symptom, not the page name — `PVC pending`, `no endpoints`,
+`rollback`, `snapshot`. Terms narrow: `network policy deny` matches only rows carrying all three. That is the drill
+in miniature, and the one thing you can practise here that survives into an exam where the bookmarks do not.
+<kbd>/</kbd> focuses the box, <kbd>Esc</kbd> clears it, and the query stays in the URL so a filtered view can be
+shared or reopened.
 
 {{< bookmarks >}}
 

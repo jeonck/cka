@@ -129,7 +129,7 @@ pre code { background: none; padding: 0; font-size: 13px; line-height: 1.6; }
 .btn.ghost { background: transparent; color: var(--fg); border-color: var(--line); }
 .btn.ghost:hover { background: var(--bg-2); }
 .btn:disabled { opacity: 0.45; cursor: not-allowed; }
-select, input[type="date"], input[type="number"], textarea {
+select, input[type="date"], input[type="number"], input[type="search"], input[type="text"], textarea {
   background: var(--bg-2); color: var(--fg); border: 1px solid var(--line);
   border-radius: 8px; padding: 7px 10px; font: inherit; font-size: 14px;
 }
@@ -143,6 +143,12 @@ label { font-size: 14px; color: var(--fg-dim); }
 .card { background: var(--bg-2); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px 20px; margin: 16px 0; }
 .grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
 .toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 18px 0; }
+/* The bookmark filter: the input takes the row, the count and the key hint
+   trail it, and everything stacks on a narrow screen. */
+.bm-search { position: sticky; top: 0; z-index: 5; background: var(--bg); padding: 10px 0; border-bottom: 1px solid var(--line); }
+.bm-search input { flex: 1 1 300px; min-width: 0; }
+.bm-search mark, .bm-row mark { background: var(--accent-soft); color: inherit; border-radius: 3px; padding: 0 1px; }
+.bm-empty { margin: 18px 0; }
 .stat { background: var(--bg-2); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px; }
 .stat b { display: block; font-size: 1.7rem; font-weight: 650; letter-spacing: -0.02em; line-height: 1.1; }
 .stat span { font-size: 12px; color: var(--fg-dim); text-transform: uppercase; letter-spacing: 0.06em; }

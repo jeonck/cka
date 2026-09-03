@@ -8,12 +8,18 @@
 </ul>
 <p class="small muted">{{ $data.policyNote }} Source: <a href="{{ $data.policySource }}" rel="nofollow">Resources Allowed, all LF certification programs</a>.</p>
 </div>
+{{/* The search toolbar is injected by assets/js/bookmarks.js, so without
+     JavaScript the page is still the complete list rather than a dead box. */}}
+<div id="bookmarkList">
 {{- range $data.folders }}
+<section class="bm-folder">
 <h2>{{ .name }} <span class="pill">{{ len .items }}</span></h2>
 <p class="small muted">{{ .why }}</p>
 <table><thead><tr><th>Page</th><th>When you reach for it</th></tr></thead><tbody>
 {{- range .items }}
-<tr><td style="white-space:nowrap"><a href="{{ .url }}" rel="nofollow">{{ .title }}</a></td><td>{{ .when }}</td></tr>
+<tr class="bm-row"><td style="white-space:nowrap"><a href="{{ .url }}" rel="nofollow">{{ .title }}</a></td><td>{{ .when }}</td></tr>
 {{- end }}
 </tbody></table>
+</section>
 {{- end }}
+</div>

@@ -86,7 +86,25 @@ const ok = await page.evaluate(async () => {
 });
 console.log('export/import round trip:', JSON.stringify(ok));
 
-// 7. mobile + theme
+// 7. bookmark search: does the filter narrow, highlight, and survive a reload?
+await go('/reference/bookmarks/');
+await page.waitForSelector('#bmq');
+const all = await page.$$eval('tr.bm-row', n => n.length);
+await page.fill('#bmq', 'pvc pending');
+await page.waitForFunction(() => document.querySelectorAll('tr.bm-row:not([hidden])').length < 5);
+const hits = await page.$$eval('tr.bm-row:not([hidden])', n => n.length);
+const marks = await page.$$eval('tr.bm-row:not([hidden]) mark', n => n.length);
+const foldersShown = await page.$$eval('.bm-folder:not([hidden])', n => n.length);
+console.log('bookmarks:', all, 'links |', hits, 'match "pvc pending" |', marks, 'highlights |', foldersShown, 'folder(s) left |', await page.textContent('#bmCount'));
+await page.keyboard.press('Escape');
+await page.waitForFunction((t) => document.querySelectorAll('tr.bm-row:not([hidden])').length === t, all);
+// The query round-trips through the URL, so a filtered view can be shared.
+await go('/reference/bookmarks/?q=etcd');
+await page.waitForSelector('#bmq');
+console.log('bookmarks from ?q=etcd:', await page.$$eval('tr.bm-row:not([hidden])', n => n.length), 'shown |',
+  'no match message hidden:', await page.$eval('.bm-empty', e => e.hidden));
+
+// 8. mobile + theme
 await page.setViewportSize({width:390,height:844});
 await go('/domains/troubleshooting/');
 const overflow = await page.evaluate(()=>document.documentElement.scrollWidth - document.documentElement.clientWidth);
