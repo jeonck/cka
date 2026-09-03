@@ -8,7 +8,8 @@
     "build": "hugo --gc --minify --destination public",
     "serve": "hugo server --buildDrafts",
     "build:pdf": "node scripts/build-pdf.mjs",
-    "build:all": "npm run build && npm run build:pdf",
+    "build:bookmarks": "node scripts/build-bookmarks.mjs",
+    "build:all": "npm run build && npm run build:pdf && npm run build:bookmarks",
     "check": "node scripts/check-data.mjs",
     "test:smoke": "node scripts/smoke.mjs"
   },

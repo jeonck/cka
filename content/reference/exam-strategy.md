@@ -92,9 +92,13 @@ the same points at minute 100.
 
 ## Documentation you are allowed, and how to use it
 
-One additional browser tab, official Kubernetes documentation. Bookmark the handful of pages you genuinely cannot
-produce cold — realistically: etcd backup/restore, kubeadm upgrade, NetworkPolicy schema, Gateway API examples,
-PV/PVC examples.
+One additional browser tab, restricted to the Kubernetes docs and blog, `github.com/kubernetes/`, the Helm docs, and
+(CKA only) the Gateway API site. The [bookmark set](/reference/bookmarks/) lists the pages worth knowing by heart —
+realistically: etcd backup/restore, kubeadm upgrade, NetworkPolicy schema, Gateway API examples, PV/PVC examples.
+
+Do not plan on carrying bookmarks in: the exam desktop's browser is provisioned fresh and personal bookmarks do not
+travel into it. What you are training is the *mapping* — this symptom, that page — because in the exam you find the
+page by searching.
 
 Everything else should come from `kubectl explain` and `kubectl <cmd> --help`, both of which are faster than a page load
 and always match the cluster's version.

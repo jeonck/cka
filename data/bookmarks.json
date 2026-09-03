@@ -1,0 +1,133 @@
+{
+  "$schema": "Exam-legal bookmark set. Every `url` must be inside one of `allowed`; scripts/check-data.mjs enforces that. `when` is the symptom or task wording that should make you reach for the page — it is the label you scan, not the doc's own title.",
+  "policyNote": "The Linux Foundation permits ONE extra browser tab, restricted to the domains listed in `allowed`. Verify that list against the Candidate Handbook and the 'Resources Allowed' page before your exam — it is revised with the curriculum.",
+  "policySource": "https://docs.linuxfoundation.org/tc-docs/certification/certification-resources-allowed",
+  "allowed": [
+    { "prefix": "https://kubernetes.io/docs/", "note": "Kubernetes documentation, all language translations" },
+    { "prefix": "https://kubernetes.io/blog/", "note": "Kubernetes blog" },
+    { "prefix": "https://github.com/kubernetes/", "note": "The kubernetes GitHub org and its repositories" },
+    { "prefix": "https://helm.sh/docs/", "note": "Helm documentation" },
+    { "prefix": "https://gateway-api.sigs.k8s.io/", "note": "Gateway API documentation — CKA only" }
+  ],
+  "folders": [
+    {
+      "name": "0 · First 60 seconds",
+      "why": "Open before task 1. Everything here answers 'what is the flag called' faster than a search does — but slower than `kubectl explain`, so use them only when explain has failed you.",
+      "items": [
+        { "title": "kubectl quick reference", "url": "https://kubernetes.io/docs/reference/kubectl/quick-reference/", "when": "The alias/completion block, and every imperative one-liner. The single highest-value page in the set.", "domain": "cluster-architecture" },
+        { "title": "kubectl create — subcommands", "url": "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_create/", "when": "\"Can I generate this instead of writing YAML?\" — the list of what `create` can produce.", "domain": "cluster-architecture" },
+        { "title": "API reference — object fields", "url": "https://kubernetes.io/docs/reference/kubernetes-api/", "when": "An exact field name or its nesting, when `kubectl explain --recursive` is not enough.", "domain": "cluster-architecture" },
+        { "title": "kubectl for Docker users / command index", "url": "https://kubernetes.io/docs/reference/kubectl/", "when": "You know the verb but not the flag, and the quick reference did not have it.", "domain": "cluster-architecture" }
+      ]
+    },
+    {
+      "name": "1 · Troubleshooting — 30%",
+      "why": "The heaviest domain, and the one that does not yield to reading. These are ordered the way a broken cluster is diagnosed: cluster, then node, then Pod, then network.",
+      "items": [
+        { "title": "Cluster is broken — where to look", "url": "https://kubernetes.io/docs/tasks/debug/debug-cluster/", "when": "Nodes NotReady, control-plane component down, API server unreachable.", "domain": "troubleshooting" },
+        { "title": "Static Pod manifests (control plane)", "url": "https://kubernetes.io/docs/tasks/configure-pod-container/static-pod/", "when": "apiserver/etcd/scheduler won't start — the manifest path and how the kubelet picks it up.", "domain": "troubleshooting" },
+        { "title": "crictl — containers below kubectl", "url": "https://kubernetes.io/docs/tasks/debug/debug-cluster/crictl/", "when": "The API server itself is down and you need the container logs anyway.", "domain": "troubleshooting" },
+        { "title": "kubelet config file", "url": "https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/", "when": "A kubelet flag or path is wrong and you need to know which file to fix.", "domain": "troubleshooting" },
+        { "title": "Node status and conditions", "url": "https://kubernetes.io/docs/reference/node/node-status/", "when": "Reading `describe node`: DiskPressure, MemoryPressure, what each condition means.", "domain": "troubleshooting" },
+        { "title": "Application not running", "url": "https://kubernetes.io/docs/tasks/debug/debug-application/", "when": "Pending, CrashLoopBackOff, ImagePullBackOff — the triage order.", "domain": "troubleshooting" },
+        { "title": "Debug Pods", "url": "https://kubernetes.io/docs/tasks/debug/debug-application/debug-pods/", "when": "A Pod is Pending or restarting and `describe` has not told you why yet.", "domain": "troubleshooting" },
+        { "title": "kubectl debug / ephemeral containers", "url": "https://kubernetes.io/docs/tasks/debug/debug-application/debug-running-pod/", "when": "The image has no shell, or you need to poke at a running Pod from inside.", "domain": "troubleshooting" },
+        { "title": "Service has no endpoints", "url": "https://kubernetes.io/docs/tasks/debug/debug-application/debug-service/", "when": "Service exists, `get endpoints` is empty — the selector/port checklist.", "domain": "troubleshooting" },
+        { "title": "DNS resolution debugging", "url": "https://kubernetes.io/docs/tasks/administer-cluster/dns-debugging-resolution/", "when": "Name resolution fails inside Pods; CoreDNS Pods or config suspect.", "domain": "troubleshooting" },
+        { "title": "metrics-server / kubectl top", "url": "https://kubernetes.io/docs/tasks/debug/debug-cluster/resource-metrics-pipeline/", "when": "`kubectl top` errors, or the task asks you to report resource usage.", "domain": "troubleshooting" },
+        { "title": "Container logs and streams", "url": "https://kubernetes.io/docs/concepts/cluster-administration/logging/", "when": "\"Write the output stream of container X to a file\" — where the logs actually live.", "domain": "troubleshooting" },
+        { "title": "System component logs", "url": "https://kubernetes.io/docs/concepts/cluster-administration/system-logs/", "when": "journalctl vs /var/log — which component logs where.", "domain": "troubleshooting" }
+      ]
+    },
+    {
+      "name": "2 · Cluster architecture — 25%",
+      "why": "etcd and kubeadm are the two tasks people most often lose whole on. Both are procedural: the page is worth opening even when you think you remember the order.",
+      "items": [
+        { "title": "etcd — BACK UP", "url": "https://kubernetes.io/docs/tasks/administer-cluster/configure-upgrade-etcd/#backing-up-an-etcd-cluster", "when": "`etcdctl snapshot save` with the three TLS flags. Do not type this from memory.", "domain": "cluster-architecture" },
+        { "title": "etcd — RESTORE", "url": "https://kubernetes.io/docs/tasks/administer-cluster/configure-upgrade-etcd/#restoring-an-etcd-cluster", "when": "`snapshot restore --data-dir`, then repoint the static Pod manifest.", "domain": "cluster-architecture" },
+        { "title": "kubeadm upgrade — control plane", "url": "https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-upgrade/#upgrading-control-plane-nodes", "when": "Drain → unhold → plan → apply → kubelet → restart → uncordon, in that order.", "domain": "cluster-architecture" },
+        { "title": "kubeadm upgrade — worker nodes", "url": "https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-upgrade/#upgrade-worker-nodes", "when": "`kubeadm upgrade node` — the step people skip after upgrading the control plane.", "domain": "cluster-architecture" },
+        { "title": "Drain a node safely", "url": "https://kubernetes.io/docs/tasks/administer-cluster/safely-drain-node/", "when": "`--ignore-daemonsets`, `--delete-emptydir-data`, and when drain hangs.", "domain": "cluster-architecture" },
+        { "title": "kubeadm join / create a cluster", "url": "https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/create-cluster-kubeadm/", "when": "Add a node; regenerate a join token; where admin.conf goes.", "domain": "cluster-architecture" },
+        { "title": "kubeadm token — new join command", "url": "https://kubernetes.io/docs/reference/setup-tools/kubeadm/kubeadm-token/", "when": "The join token expired: `kubeadm token create --print-join-command`.", "domain": "cluster-architecture" },
+        { "title": "HA control-plane topologies", "url": "https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/ha-topology/", "when": "Stacked vs external etcd — the distinction a question can turn on.", "domain": "cluster-architecture" },
+        { "title": "kubeadm certificate renewal", "url": "https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-certs/", "when": "Expired control-plane certs; `kubeadm certs check-expiration`.", "domain": "cluster-architecture" },
+        { "title": "RBAC — Role / RoleBinding YAML", "url": "https://kubernetes.io/docs/reference/access-authn-authz/rbac/#api-overview", "when": "verbs, apiGroups, resourceNames — the exact spec shape.", "domain": "cluster-architecture" },
+        { "title": "RBAC — imperative + auth can-i", "url": "https://kubernetes.io/docs/reference/access-authn-authz/rbac/#command-line-utilities", "when": "`create role/rolebinding` flags, and how to prove the binding works.", "domain": "cluster-architecture" },
+        { "title": "ServiceAccount for a Pod", "url": "https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/", "when": "Bind a role to a ServiceAccount and attach it to a workload.", "domain": "cluster-architecture" },
+        { "title": "CertificateSigningRequest (user access)", "url": "https://kubernetes.io/docs/reference/access-authn-authz/certificate-signing-requests/", "when": "\"Create a user and grant it access\" — CSR YAML, approve, build the kubeconfig.", "domain": "cluster-architecture" },
+        { "title": "kubeconfig — contexts and users", "url": "https://kubernetes.io/docs/tasks/access-application-cluster/configure-access-multiple-clusters/", "when": "`set-credentials` / `set-context` when you must hand back a working kubeconfig.", "domain": "cluster-architecture" },
+        { "title": "CRDs — define a custom resource", "url": "https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/", "when": "Install or inspect a CRD; `kubectl get crd`, scope, versions.", "domain": "cluster-architecture" },
+        { "title": "Operator pattern", "url": "https://kubernetes.io/docs/concepts/extend-kubernetes/operator/", "when": "A question frames a controller-plus-CRD as an operator.", "domain": "cluster-architecture" },
+        { "title": "Extension interfaces — CNI / CSI / CRI", "url": "https://kubernetes.io/docs/concepts/extend-kubernetes/compute-storage-net/network-plugins/", "when": "Which interface owns what; where a CNI config file lives.", "domain": "cluster-architecture" },
+        { "title": "Container runtimes (CRI setup)", "url": "https://kubernetes.io/docs/setup/production-environment/container-runtimes/", "when": "cgroup driver, containerd config, the socket path.", "domain": "cluster-architecture" }
+      ]
+    },
+    {
+      "name": "3 · Services & networking — 20%",
+      "why": "Gateway API is the post-2025 addition most people have not practised. NetworkPolicy is the one YAML on the exam that is genuinely hard to produce cold.",
+      "items": [
+        { "title": "NetworkPolicy — the resource", "url": "https://kubernetes.io/docs/concepts/services-networking/network-policies/#networkpolicy-resource", "when": "podSelector / ingress / egress / ports. Copy, then cut.", "domain": "services-networking" },
+        { "title": "NetworkPolicy — default deny", "url": "https://kubernetes.io/docs/concepts/services-networking/network-policies/#default-policies", "when": "\"Deny all traffic except…\" — the empty-selector policies.", "domain": "services-networking" },
+        { "title": "NetworkPolicy — walkthrough", "url": "https://kubernetes.io/docs/tasks/administer-cluster/declare-network-policy/", "when": "You want the worked example rather than the reference.", "domain": "services-networking" },
+        { "title": "Service — types and ports", "url": "https://kubernetes.io/docs/concepts/services-networking/service/", "when": "ClusterIP / NodePort / LoadBalancer; targetPort vs port vs nodePort.", "domain": "services-networking" },
+        { "title": "Endpoints and EndpointSlices", "url": "https://kubernetes.io/docs/concepts/services-networking/endpoint-slices/", "when": "Verifying a Service actually selected Pods.", "domain": "services-networking" },
+        { "title": "Ingress — the resource", "url": "https://kubernetes.io/docs/concepts/services-networking/ingress/#the-ingress-resource", "when": "Path rules, pathType, backend service — the YAML to copy.", "domain": "services-networking" },
+        { "title": "IngressClass", "url": "https://kubernetes.io/docs/concepts/services-networking/ingress/#ingress-class", "when": "The Ingress is created but no controller picks it up.", "domain": "services-networking" },
+        { "title": "Gateway API (Kubernetes docs)", "url": "https://kubernetes.io/docs/concepts/services-networking/gateway/", "when": "GatewayClass → Gateway → HTTPRoute, on the allowed kubernetes.io domain.", "domain": "services-networking" },
+        { "title": "Gateway API — official site", "url": "https://gateway-api.sigs.k8s.io/", "when": "The upstream docs. Allowed for CKA only. Deep links move between releases — enter through the root.", "domain": "services-networking" },
+        { "title": "Gateway API — guides", "url": "https://gateway-api.sigs.k8s.io/guides/", "when": "A worked HTTPRoute; simple gateway; traffic splitting.", "domain": "services-networking" },
+        { "title": "DNS for Services and Pods", "url": "https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/", "when": "The FQDN form: svc.namespace.svc.cluster.local.", "domain": "services-networking" },
+        { "title": "CoreDNS customisation", "url": "https://kubernetes.io/docs/tasks/administer-cluster/dns-custom-nameservers/", "when": "Editing the CoreDNS Corefile ConfigMap.", "domain": "services-networking" },
+        { "title": "Connect applications with a Service", "url": "https://kubernetes.io/docs/tutorials/services/connect-applications-service/", "when": "Expose a Deployment end to end, verified from a client Pod.", "domain": "services-networking" }
+      ]
+    },
+    {
+      "name": "4 · Workloads & scheduling — 15%",
+      "why": "Most of this domain is imperative kubectl and should never cost you a page load. These are the exceptions — the spec blocks with nesting you will get wrong from memory.",
+      "items": [
+        { "title": "Deployment — rollout and rollback", "url": "https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#rolling-back-a-deployment", "when": "`rollout undo --to-revision`, `rollout history`, `rollout status`.", "domain": "workloads-scheduling" },
+        { "title": "Deployment — update strategy", "url": "https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#updating-a-deployment", "when": "maxSurge / maxUnavailable placement in the spec.", "domain": "workloads-scheduling" },
+        { "title": "ConfigMap into a Pod", "url": "https://kubernetes.io/docs/tasks/configure-pod-container/configure-pod-configmap/", "when": "envFrom vs valueFrom vs volume mount — all three shapes on one page.", "domain": "workloads-scheduling" },
+        { "title": "Secrets with kubectl", "url": "https://kubernetes.io/docs/tasks/configmap-secret/managing-secret-using-kubectl/", "when": "`create secret generic --from-literal`, and reading one back.", "domain": "workloads-scheduling" },
+        { "title": "Probes — liveness / readiness / startup", "url": "https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/", "when": "The probe block, including initialDelaySeconds and the exec form.", "domain": "workloads-scheduling" },
+        { "title": "Requests and limits", "url": "https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/", "when": "resources: block; units for cpu and memory.", "domain": "workloads-scheduling" },
+        { "title": "HPA — walkthrough", "url": "https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale-walkthrough/", "when": "\"Configure workload autoscaling\" — `kubectl autoscale`, then verify.", "domain": "workloads-scheduling" },
+        { "title": "HPA — how it decides", "url": "https://kubernetes.io/docs/concepts/workloads/autoscaling/horizontal-pod-autoscale/", "when": "The v2 spec with metrics, if a target other than CPU is asked for.", "domain": "workloads-scheduling" },
+        { "title": "Taints and tolerations", "url": "https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/", "when": "NoSchedule / PreferNoSchedule / NoExecute, and the toleration block.", "domain": "workloads-scheduling" },
+        { "title": "nodeSelector and node affinity", "url": "https://kubernetes.io/docs/tasks/configure-pod-container/assign-pods-nodes-using-node-affinity/", "when": "required vs preferred — the nesting nobody remembers.", "domain": "workloads-scheduling" },
+        { "title": "Scheduling reference", "url": "https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/", "when": "Pod affinity/anti-affinity and topologySpreadConstraints.", "domain": "workloads-scheduling" },
+        { "title": "PodDisruptionBudget", "url": "https://kubernetes.io/docs/tasks/run-application/configure-pdb/", "when": "minAvailable / maxUnavailable, usually paired with a drain task.", "domain": "workloads-scheduling" },
+        { "title": "DaemonSet", "url": "https://kubernetes.io/docs/concepts/workloads/controllers/daemonset/", "when": "One Pod per node, and why a drain needs --ignore-daemonsets.", "domain": "workloads-scheduling" },
+        { "title": "CronJob and Job", "url": "https://kubernetes.io/docs/tasks/job/automated-tasks-with-cron-jobs/", "when": "schedule, restartPolicy, backoffLimit — `create cronjob` gets you most of it.", "domain": "workloads-scheduling" },
+        { "title": "Init containers", "url": "https://kubernetes.io/docs/concepts/workloads/pods/init-containers/", "when": "A Pod must wait on something before its main container starts.", "domain": "workloads-scheduling" }
+      ]
+    },
+    {
+      "name": "5 · Storage — 10%",
+      "why": "Ten percent, and almost always the same shape: make a PVC bind. The three conditions for binding are what the page is really for.",
+      "items": [
+        { "title": "PV and PVC — binding lifecycle", "url": "https://kubernetes.io/docs/concepts/storage/persistent-volumes/#lifecycle-of-a-volume-and-claim", "when": "The PVC is Pending: accessModes, size, storageClassName must all agree.", "domain": "storage" },
+        { "title": "PV / PVC YAML to copy", "url": "https://kubernetes.io/docs/tasks/configure-pod-container/configure-volume-storage/", "when": "A minimal volume spec you can edit down in seconds.", "domain": "storage" },
+        { "title": "PV walkthrough (hostPath)", "url": "https://kubernetes.io/docs/tutorials/configuration/configure-persistent-volume-storage/", "when": "The full PV → PVC → Pod chain, which is the usual exam task.", "domain": "storage" },
+        { "title": "StorageClass", "url": "https://kubernetes.io/docs/concepts/storage/storage-classes/", "when": "provisioner, reclaimPolicy, volumeBindingMode.", "domain": "storage" },
+        { "title": "Change the default StorageClass", "url": "https://kubernetes.io/docs/tasks/administer-cluster/change-default-storage-class/", "when": "The is-default-class annotation, exactly as spelled.", "domain": "storage" },
+        { "title": "Dynamic provisioning", "url": "https://kubernetes.io/docs/concepts/storage/dynamic-provisioning/", "when": "A PVC should create its PV rather than match an existing one.", "domain": "storage" },
+        { "title": "Volume types", "url": "https://kubernetes.io/docs/concepts/storage/volumes/", "when": "emptyDir, hostPath, configMap and secret volumes.", "domain": "storage" }
+      ]
+    },
+    {
+      "name": "6 · Helm & Kustomize",
+      "why": "Added to the curriculum in the 2025 revision, and the most common gap in people who studied from older material. Helm's docs are a separate allowed domain.",
+      "items": [
+        { "title": "Kustomize with kubectl", "url": "https://kubernetes.io/docs/tasks/manage-kubernetes-objects/kustomization/", "when": "kustomization.yaml; `kubectl apply -k`; `kubectl kustomize` to preview.", "domain": "cluster-architecture" },
+        { "title": "Helm — using Helm", "url": "https://helm.sh/docs/intro/using_helm/", "when": "install / upgrade / rollback / uninstall and what each does.", "domain": "cluster-architecture" },
+        { "title": "helm install", "url": "https://helm.sh/docs/helm/helm_install/", "when": "`--set`, `-f values.yaml`, `--namespace --create-namespace`.", "domain": "cluster-architecture" },
+        { "title": "helm upgrade", "url": "https://helm.sh/docs/helm/helm_upgrade/", "when": "`--install`, `--reuse-values`, and rolling a release forward.", "domain": "cluster-architecture" },
+        { "title": "helm repo add", "url": "https://helm.sh/docs/helm/helm_repo_add/", "when": "Add and update a chart repository before installing from it.", "domain": "cluster-architecture" },
+        { "title": "helm template", "url": "https://helm.sh/docs/helm/helm_template/", "when": "\"Show what this chart would apply\" without touching the cluster.", "domain": "cluster-architecture" },
+        { "title": "Charts — values and structure", "url": "https://helm.sh/docs/topics/charts/", "when": "Where values.yaml sits and how overrides resolve.", "domain": "cluster-architecture" }
+      ]
+    }
+  ]
+}

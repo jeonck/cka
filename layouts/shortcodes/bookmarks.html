@@ -1,0 +1,19 @@
+{{- $data := hugo.Data.bookmarks -}}
+<div class="callout">
+<p><strong>Allowed during the exam</strong> — one extra browser tab, restricted to these:</p>
+<ul>
+{{- range $data.allowed }}
+<li><code>{{ .prefix }}</code> — {{ .note }}</li>
+{{- end }}
+</ul>
+<p class="small muted">{{ $data.policyNote }} Source: <a href="{{ $data.policySource }}" rel="nofollow">Resources Allowed, all LF certification programs</a>.</p>
+</div>
+{{- range $data.folders }}
+<h2>{{ .name }} <span class="pill">{{ len .items }}</span></h2>
+<p class="small muted">{{ .why }}</p>
+<table><thead><tr><th>Page</th><th>When you reach for it</th></tr></thead><tbody>
+{{- range .items }}
+<tr><td style="white-space:nowrap"><a href="{{ .url }}" rel="nofollow">{{ .title }}</a></td><td>{{ .when }}</td></tr>
+{{- end }}
+</tbody></table>
+{{- end }}

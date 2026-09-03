@@ -63,6 +63,28 @@ function mnemonicsSection() {
     comprehension. Generated from <code>data/mnemonics.json</code>.</p>${blocks}</section>`;
 }
 
+function bookmarksSection() {
+  const data = JSON.parse(read("data/bookmarks.json"));
+  const blocks = data.folders
+    .map(
+      (f) => `<h2>${escapeHtml(f.name)}</h2><p class="why">${md.renderInline(f.why)}</p>
+        <table>${f.items
+          .map(
+            (b) => `<tr><td><strong>${escapeHtml(b.title)}</strong><br>
+              <code>${escapeHtml(b.url.replace(/^https:\/\//, ""))}</code></td>
+              <td>${md.renderInline(b.when)}</td></tr>`
+          )
+          .join("")}</table>`
+    )
+    .join("");
+  return `<section class="chapter bookmarks"><p class="chapter-label">Documentation index</p>
+    <h1>Exam-legal documentation index</h1>
+    <p class="lede">The pages worth reaching for, and the symptom that should send you to each. The exam permits one
+    extra browser tab, restricted to ${data.allowed.map((a) => `<code>${escapeHtml(a.prefix)}</code>`).join(", ")}.
+    Personal bookmarks do not survive into the exam desktop, so what this trains is the mapping — symptom to page —
+    not the clicking. Generated from <code>data/bookmarks.json</code>.</p>${blocks}</section>`;
+}
+
 const escapeHtml = (s) =>
   String(s).replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
 
@@ -102,6 +124,13 @@ const html = `<!doctype html>
   .mnemonic { break-inside: avoid; margin: 7pt 0; }
   .mnemonic .hook { font-weight: 700; margin: 1pt 0 3pt; }
   .mnemonic .why { font-size: 8.2pt; color: #43505e; margin: 2pt 0 0; }
+  .bookmarks .why { font-size: 8.2pt; color: #43505e; margin: 2pt 0 4pt; }
+  /* These tables are longer than a page; break-inside:avoid would only push a
+     whole folder to the next page and leave the gap behind. */
+  .bookmarks table { break-inside: auto; }
+  .bookmarks tr { break-inside: avoid; }
+  .bookmarks td code { font-size: 7.2pt; background: none; padding: 0; color: #43505e; word-break: break-all; }
+  .bookmarks td:first-child { width: 47%; }
   .mnemonic th { white-space: nowrap; font-family: "DejaVu Sans Mono", monospace; font-size: 7.6pt; }
   .cover { height: 252mm; display: flex; flex-direction: column; justify-content: center; }
   .cover h1 { font-size: 30pt; line-height: 1.05; margin-bottom: 10pt; }
@@ -148,6 +177,7 @@ const html = `<!doctype html>
     <li>Workloads and Scheduling (15%) — rollouts, config, autoscaling, scheduling</li>
     <li>Storage (10%) — binding, StorageClasses, access modes, reclaim policies</li>
     <li>Exam strategy — the seven-minute budget and the verification habit</li>
+    <li>Documentation index — which allowed page answers which symptom</li>
     <li>Appendix: curriculum v1.35, verbatim</li>
   </ol>
 </section>
@@ -160,6 +190,7 @@ ${section("content/domains/services-networking.md")}
 ${section("content/domains/workloads-scheduling.md")}
 ${section("content/domains/storage.md")}
 ${section("content/reference/exam-strategy.md")}
+${bookmarksSection()}
 ${section("docs/curriculum.md", { appendix: true })}
 
 </body></html>`;

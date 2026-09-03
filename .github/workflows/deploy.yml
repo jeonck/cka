@@ -61,6 +61,9 @@ jobs:
       - name: Regenerate the one-book PDF
         run: npm run build:pdf
 
+      - name: Generate the importable bookmark file
+        run: npm run build:bookmarks
+
       - name: Smoke-test the study tools
         # Drives review, practice, dashboard, plan and export/import in headless
         # Chromium and fails on any console error.

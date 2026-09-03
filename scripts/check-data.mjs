@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
 const load = (f) => JSON.parse(readFileSync(`${root}data/${f}`, "utf8")).items;
+const loadFile = (f) => JSON.parse(readFileSync(`${root}data/${f}`, "utf8"));
 
 const DOMAINS = new Set([
   "troubleshooting",
@@ -21,6 +22,7 @@ const flashcards = load("flashcards.json");
 const cloze = load("cloze.json");
 const tasks = load("tasks.json");
 const mnemonics = load("mnemonics.json");
+const bookmarks = loadFile("bookmarks.json");
 
 const ids = new Set();
 for (const [name, set] of [["flashcards", flashcards], ["cloze", cloze], ["tasks", tasks], ["mnemonics", mnemonics]]) {
@@ -63,6 +65,28 @@ for (const m of mnemonics) {
   if (!m.why) fail(`${m.id}: mnemonic has no "why"`);
 }
 
+// The bookmark set is only useful if every link is one the exam actually
+// permits — an out-of-scope URL is worse than no bookmark, because opening it
+// in the exam is a rules violation. Prefix-check every one against the allowed
+// list, and keep the file small enough to scan.
+const prefixes = bookmarks.allowed.map((a) => a.prefix);
+const seenUrls = new Set();
+let bookmarkCount = 0;
+for (const folder of bookmarks.folders) {
+  if (!folder.name) fail("bookmarks: a folder has no name");
+  if (!folder.why) fail(`bookmarks: folder "${folder.name}" has no "why"`);
+  if (!folder.items?.length) fail(`bookmarks: folder "${folder.name}" is empty`);
+  for (const b of folder.items || []) {
+    bookmarkCount++;
+    if (!b.title || !b.url || !b.when) fail(`bookmarks: an item in "${folder.name}" is missing title, url or when`);
+    if (!DOMAINS.has(b.domain)) fail(`bookmarks: ${b.title} — unknown domain "${b.domain}"`);
+    if (!prefixes.some((p) => b.url?.startsWith(p)))
+      fail(`bookmarks: ${b.url} is outside the documentation the exam allows`);
+    if (seenUrls.has(b.url)) fail(`bookmarks: duplicate url ${b.url}`);
+    seenUrls.add(b.url);
+  }
+}
+
 const byDomain = (set) =>
   [...DOMAINS].map((d) => `${d}:${set.filter((i) => i.domain === d).length}`).join(" ");
 
@@ -77,3 +101,4 @@ console.log(`  flashcards ${flashcards.length}  ${byDomain(flashcards)}`);
 console.log(`  cloze      ${cloze.length}  ${byDomain(cloze)}`);
 console.log(`  tasks      ${tasks.length}  ${byDomain(tasks)} · ${tasks.reduce((a, t) => a + t.targetMinutes, 0)} target minutes`);
 console.log(`  mnemonics  ${mnemonics.length}  ${byDomain(mnemonics)}`);
+console.log(`  bookmarks  ${bookmarkCount}  in ${bookmarks.folders.length} folders · ${prefixes.length} allowed domains`);

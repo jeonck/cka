@@ -47,6 +47,7 @@ reported seeing it on an exam.
 | **SM-2 scheduler** | Ease factor, interval and repetition count per item, driving both the flashcard and cloze queues. |
 | **Dashboard** | Per-domain mastery and time spent, sorted by *exam risk* — curriculum weight × distance from mastery — so the weakest high-weight domain always leads. |
 | **Study plan** | Target exam date in, daily workload out, with the last three days reserved for review only. |
+| **Exam bookmarks** | 77 exam-legal documentation links, ordered by domain weight, with the symptom that should send you to each. Downloadable as a Netscape bookmark file for the simulator, and printed into the PDF as a symptom→page index. |
 | **One-book PDF** | 32 dense A4 pages generated from the same markdown and JSON as the site. |
 
 Seeded with real content for all five domains; **Troubleshooting (30%)** and **Cluster Architecture (25%)** — the two
@@ -137,7 +138,7 @@ hugo.toml               baseURL, Goldmark unsafe, the items output format, docs/
 content/
   _index.md             home page prose (the hero lives in layouts/home.html)
   domains/*.md          the five domain pages — decision trees, prose source of truth
-  reference/*.md        command cheat sheet, exam strategy
+  reference/*.md        command cheat sheet, exam bookmarks, exam strategy
   tools/*.md            the six tool pages; front matter `script:` names the ES module
   api/_index.md         emits /api/items.json via the `items` output format
 docs/                   mounted to /docs/ — kept at the repo root by design
@@ -148,12 +149,13 @@ data/                   read natively by Hugo AND by scripts/build-pdf.mjs
   cloze.json            [[blanks]] marked inline
   tasks.json            timed scenarios: solution steps, verification, gotcha
   mnemonics.json        renders both the site page and the PDF chapter
+  bookmarks.json        the exam-legal link set: site page, PDF chapter, and the importable file
 layouts/
   baseof.html           chrome; nav is generated from the domain pages
   home.html page.html section.html
   domains/page.html     weight badge + per-domain drill links
   api/section.items.json
-  shortcodes/           domain-select, domain-grid, mnemonics
+  shortcodes/           domain-select, domain-grid, mnemonics, bookmarks
   _markup/render-heading.html
 static/
   CNAME                 cka.metacog.co.kr
@@ -161,6 +163,7 @@ static/
   assets/js/            srs.js store.js review.js practice.js dashboard.js plan.js datatool.js
 scripts/
   build-pdf.mjs         markdown + JSON -> Chromium -> public/cka-reference.pdf
+  build-bookmarks.mjs   bookmarks.json -> public/cka-bookmarks.html (Netscape format)
   check-data.mjs        data validation
   smoke.mjs             end-to-end browser test
 ```
@@ -172,7 +175,8 @@ scripts/
   ordering key) and `summary`. Nav, the home page weight bar, and every domain dropdown are generated from those, so
   nothing needs registering.
 - **Drill items** — append to the relevant `data/*.json`. `npm run check` enforces unique ids, known domains, balanced
-  `[[blanks]]`, and that every task has both a model solution and a verification command.
+  `[[blanks]]`, and that every task has both a model solution and a verification command. For `bookmarks.json` it also
+  rejects any URL outside the documentation the exam permits — an out-of-scope link is worse than no link.
 - Nothing needs registering anywhere: the site, `/api/items.json` and the PDF all read the same files.
 
 ---
