@@ -1,0 +1,75 @@
+{{- /* One index for the whole site, emitted at /api/search.json and fetched
+       once by assets/js/search.js.
+
+       Prose is indexed per `##` section rather than per page: the page is a
+       long decision tree and "which section" is the answer the reader wants,
+       so each entry carries its own anchor. Drill items, mnemonics, tasks and
+       bookmarks come from the same data files the site renders, so nothing
+       here can drift from what is published. */ -}}
+{{- $entries := slice -}}
+
+{{- /* Strip shortcode calls and hand-written HTML so the index holds prose. */ -}}
+{{- $clean := "(?s)\\{\\{[<%].*?[>%]\\}\\}|</?[a-zA-Z][^>]*>" -}}
+
+{{- range site.RegularPages -}}
+  {{- $page := . -}}
+  {{- $section := "" -}}
+  {{- with .CurrentSection }}{{ $section = .Title }}{{ end -}}
+  {{- $chunks := split .RawContent "\n## " -}}
+  {{- $intro := replaceRE $clean " " (index $chunks 0) -}}
+  {{- $entries = $entries | append (dict
+        "kind" "page" "title" $page.Title "parent" $section
+        "url" $page.RelPermalink
+        "text" (printf "%s %s" (or $page.Params.summary "") $intro)) -}}
+  {{- range after 1 $chunks -}}
+    {{- $head := index (findRE "^[^\n]*" . 1) 0 -}}
+    {{- $body := replaceRE $clean " " (substr . (len $head)) -}}
+    {{- $explicit := replaceRE "^.*\\{#([-a-zA-Z0-9_]+)\\}.*$" "$1" $head -}}
+    {{- $title := trim (replaceRE "`|\\{#[-a-zA-Z0-9_]+\\}" "" $head) " " -}}
+    {{- $anchor := cond (eq $explicit $head) (anchorize $title) $explicit -}}
+    {{- if $title -}}
+      {{- $entries = $entries | append (dict
+            "kind" "section" "title" $title "parent" $page.Title
+            "url" (printf "%s#%s" $page.RelPermalink $anchor)
+            "text" $body) -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+
+{{- range hugo.Data.flashcards.items -}}
+  {{- $entries = $entries | append (dict
+        "kind" "flashcard" "title" .front "parent" .domain
+        "url" (printf "tools/review/?domain=%s" .domain | relURL) "text" .back) -}}
+{{- end -}}
+
+{{- range hugo.Data.cloze.items -}}
+  {{- $entries = $entries | append (dict
+        "kind" "cloze" "title" .title "parent" .domain
+        "url" (printf "tools/review/?domain=%s" .domain | relURL)
+        "text" (printf "%s %s" (replaceRE "\\[\\[|\\]\\]" "" .text) .why)) -}}
+{{- end -}}
+
+{{- range hugo.Data.tasks.items -}}
+  {{- $entries = $entries | append (dict
+        "kind" "task" "title" .title "parent" .domain
+        "url" (printf "tools/practice/?task=%s" .id | relURL)
+        "text" (printf "%s %s" .scenario (delimit (apply .solution "index" "." "cmd") " "))) -}}
+{{- end -}}
+
+{{- range hugo.Data.mnemonics.items -}}
+  {{- $entries = $entries | append (dict
+        "kind" "mnemonic" "title" .title "parent" .mnemonic
+        "url" (printf "tools/mnemonics/#%s" .id | relURL)
+        "text" (printf "%s %s %s" .mnemonic (delimit (apply .sequence "index" "." "text") " ") .why)) -}}
+{{- end -}}
+
+{{- range hugo.Data.bookmarks.folders -}}
+  {{- $folder := .name -}}
+  {{- range .items -}}
+    {{- $entries = $entries | append (dict
+          "kind" "bookmark" "title" .title "parent" $folder
+          "url" .url "text" (printf "%s %s" .when .url) "external" true) -}}
+  {{- end -}}
+{{- end -}}
+
+{{- dict "built" (now.Format "2006-01-02") "entries" $entries | jsonify -}}

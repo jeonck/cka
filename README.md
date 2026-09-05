@@ -48,6 +48,7 @@ reported seeing it on an exam.
 | **Dashboard** | Per-domain mastery and time spent, sorted by *exam risk* — curriculum weight × distance from mastery — so the weakest high-weight domain always leads. |
 | **Study plan** | Target exam date in, daily workload out, with the last three days reserved for review only. |
 | **Exam bookmarks** | 77 exam-legal documentation links, ordered by domain weight, with the symptom that should send you to each — searchable by that symptom, which is the drill. Downloadable as a Netscape bookmark file for the simulator, and printed into the PDF as a symptom→page index. |
+| **Site-wide search** | A command palette over one index — every prose section with its own anchor, plus all 156 drill items, the practice tasks, the mnemonics and the bookmarks. <kbd>/</kbd> anywhere, <kbd>⌘K</kbd> even where a page has its own filter. Fetched on first open, not on page load. |
 | **One-book PDF** | 32 dense A4 pages generated from the same markdown and JSON as the site. |
 
 Seeded with real content for all five domains; **Troubleshooting (30%)** and **Cluster Architecture (25%)** — the two
@@ -140,7 +141,7 @@ content/
   domains/*.md          the five domain pages — decision trees, prose source of truth
   reference/*.md        command cheat sheet, exam bookmarks, exam strategy
   tools/*.md            the six tool pages; front matter `script:` names the ES module
-  api/_index.md         emits /api/items.json via the `items` output format
+  api/_index.md         emits /api/items.json and /api/search.json via two output formats
 docs/                   mounted to /docs/ — kept at the repo root by design
   curriculum.md         CNCF curriculum v1.35, verbatim, with source URLs and fetch date
   retrospectives.md     community themes, with sources and a sourcing caveat
@@ -155,12 +156,13 @@ layouts/
   home.html page.html section.html
   domains/page.html     weight badge + per-domain drill links
   api/section.items.json
+  api/section.search.json  the search index: prose split per `##`, plus every data file
   shortcodes/           domain-select, domain-grid, mnemonics, bookmarks
   _markup/render-heading.html
 static/
   CNAME                 cka.metacog.co.kr
   assets/css/main.css
-  assets/js/            srs.js store.js review.js practice.js dashboard.js plan.js datatool.js bookmarks.js
+  assets/js/            srs.js store.js review.js practice.js dashboard.js plan.js datatool.js bookmarks.js search.js
 scripts/
   build-pdf.mjs         markdown + JSON -> Chromium -> public/cka-reference.pdf
   build-bookmarks.mjs   bookmarks.json -> public/cka-bookmarks.html (Netscape format)

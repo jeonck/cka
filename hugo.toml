@@ -64,6 +64,14 @@ disableKinds = ["taxonomy", "term"]
   isPlainText = true
   notAlternative = true
 
+# One search index over prose sections, drill items and bookmarks, emitted at
+# /api/search.json and fetched once by the site-wide search palette.
+[outputFormats.search]
+  mediaType = "application/json"
+  baseName = "search"
+  isPlainText = true
+  notAlternative = true
+
 [outputs]
   home = ["html"]
   section = ["html"]

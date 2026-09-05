@@ -63,6 +63,15 @@ a:hover { text-decoration: underline; }
   font: inherit; font-size: 13px; cursor: pointer;
 }
 .theme-toggle { margin-left: 0; min-width: 38px; }
+/* Opens the search palette. Looks like a field because that is what it stands
+   in for; the real input lives in the dialog. */
+.search-open {
+  display: flex; align-items: center; gap: 8px; min-width: 200px;
+  background: var(--bg-2); color: var(--fg-dim); border: 1px solid var(--line);
+  border-radius: 8px; padding: 6px 10px; font: inherit; font-size: 13px; cursor: pointer;
+}
+.search-open:hover { border-color: var(--accent); color: var(--fg); }
+.search-open kbd { margin-left: auto; }
 .nav-toggle { display: none; }
 
 .shell { display: grid; grid-template-columns: 250px minmax(0, 1fr); gap: 32px; max-width: 1180px; margin: 0 auto; padding: 24px 16px 64px; }
@@ -141,6 +150,8 @@ label { font-size: 14px; color: var(--fg-dim); }
 
 /* ---------- cards / tools ---------- */
 .card { background: var(--bg-2); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px 20px; margin: 16px 0; }
+/* The card a search result pointed at. */
+.card.is-target { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
 .grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
 .toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 18px 0; }
 /* The bookmark filter: the input takes the row, the count and the key hint
@@ -196,10 +207,37 @@ details[open] > summary { margin-bottom: 8px; }
 .weights a { flex-basis: 0; flex-shrink: 0; display: grid; place-items: center; font-size: 12px; font-weight: 600; color: var(--bg); background: var(--accent); opacity: 0.9; }
 .weights a:hover { opacity: 1; text-decoration: none; }
 
+/* ---------- search palette ---------- */
+.palette { border: none; background: none; padding: 0; width: min(760px, calc(100% - 28px)); margin: 8vh auto auto; }
+.palette::backdrop { background: rgba(0, 0, 0, 0.55); }
+.palette-box {
+  background: var(--bg-2); border: 1px solid var(--line); border-radius: var(--radius);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.45); padding: 14px;
+}
+/* 16px keeps iOS from zooming the page when the field takes focus. */
+.palette input { width: 100%; font-size: 16px; }
+.palette-hint { margin: 9px 3px; }
+.palette-results { list-style: none; margin: 0; padding: 0; max-height: 58vh; overflow-y: auto; }
+.palette-results a {
+  display: block; padding: 7px 10px; border-radius: 8px; color: var(--fg); text-decoration: none;
+}
+.palette-results a:hover, .palette-results a.is-active { background: var(--bg-3); }
+.palette-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; }
+.palette-kind {
+  flex: 0 0 62px; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--fg-dim);
+}
+.palette-title { font-weight: 550; }
+.palette-snip { display: block; margin: 1px 0 0 70px; }
+.palette mark { background: var(--accent-soft); color: inherit; border-radius: 3px; padding: 0 1px; }
+
 /* ---------- responsive ---------- */
 @media (max-width: 860px) {
   .shell { grid-template-columns: 1fr; gap: 0; padding-top: 12px; }
   .nav-toggle { display: block; }
+  .search-open { min-width: 0; }
+  .search-open-label, .search-open kbd { display: none; }
+  .palette { margin-top: 4vh; }
+  .palette-snip { margin-left: 0; }
   .sidenav { position: static; max-height: none; display: none; border-bottom: 1px solid var(--line); padding-bottom: 12px; margin-bottom: 18px; }
   .sidenav.open { display: block; }
   .prose { max-width: none; }

@@ -23,6 +23,8 @@
 
 <header class="topbar">
   <a class="brand" href="{{ "/" | relURL }}"><span aria-hidden="true">☸</span> {{ site.Title }}</a>
+  <button id="searchOpen" class="search-open" title="Search the site (/)" aria-label="Search the site">
+    <span aria-hidden="true">⌕</span> <span class="search-open-label">Search</span> <kbd>/</kbd></button>
   <button id="navToggle" class="nav-toggle" aria-expanded="false" aria-controls="sidenav">Menu</button>
   <button id="themeToggle" class="theme-toggle" title="Toggle theme (t)" aria-label="Toggle colour theme">◐</button>
 </header>
@@ -74,6 +76,7 @@
 </footer>
 
 <script type="module" src="{{ "assets/js/app.js" | relURL }}"></script>
+<script type="module" src="{{ "assets/js/search.js" | relURL }}"></script>
 {{ with .Params.script }}<script type="module" src="{{ (printf "assets/js/%s.js" .) | relURL }}"></script>{{ end }}
 </body>
 </html>

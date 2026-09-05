@@ -1,6 +1,6 @@
 ---
 title: Drill items
-outputs: ["items"]
+outputs: ["items", "search"]
 build:
   list: never
 sitemap:

@@ -104,7 +104,31 @@ await page.waitForSelector('#bmq');
 console.log('bookmarks from ?q=etcd:', await page.$$eval('tr.bm-row:not([hidden])', n => n.length), 'shown |',
   'no match message hidden:', await page.$eval('.bm-empty', e => e.hidden));
 
-// 8. mobile + theme
+// 8. site-wide search palette: does "/" open it, does it rank sensibly, does Enter navigate?
+await go('/');
+await page.keyboard.press('/');
+await page.waitForSelector('#siteSearch[open] #ssq');
+await page.fill('#ssq', 'pvc pending');
+await page.waitForFunction(() => document.querySelectorAll('#ssResults a').length > 0);
+const top = await page.$$eval('#ssResults a', a => a.slice(0, 3).map(x =>
+  `${x.querySelector('.palette-kind').textContent.trim()}:${x.querySelector('.palette-title').textContent.trim()}`));
+console.log('search "pvc pending":', await page.textContent('#ssHint'), '|', top.join(' / '));
+await page.keyboard.press('ArrowDown');
+const href = await page.$eval('#ssResults a.is-active', a => a.getAttribute('href'));
+await Promise.all([page.waitForNavigation({ waitUntil: 'networkidle' }), page.keyboard.press('Enter')]);
+console.log('search Enter →', href, '| landed', await page.evaluate(() => location.pathname + location.search));
+// A deep-linked practice task is marked rather than started.
+await go('/tools/practice/?task=tk-004');
+await page.waitForSelector('.card.is-target');
+console.log('task deep link:', await page.$eval('.card.is-target h3', h => h.textContent));
+// The bookmark page keeps "/" for its own filter; the palette is still on ctrl+K.
+await go('/reference/bookmarks/');
+await page.click('h1');
+await page.keyboard.press('/');
+console.log('bookmarks keep "/":', await page.evaluate(() => document.activeElement?.id),
+  '| palette open:', !!(await page.$('#siteSearch[open]')));
+
+// 9. mobile + theme
 await page.setViewportSize({width:390,height:844});
 await go('/domains/troubleshooting/');
 const overflow = await page.evaluate(()=>document.documentElement.scrollWidth - document.documentElement.clientWidth);

@@ -43,7 +43,8 @@ The folder names sort in order, so the bar reads left to right the way you shoul
 `rollback`, `snapshot`. Terms narrow: `network policy deny` matches only rows carrying all three. That is the drill
 in miniature, and the one thing you can practise here that survives into an exam where the bookmarks do not.
 <kbd>/</kbd> focuses the box, <kbd>Esc</kbd> clears it, and the query stays in the URL so a filtered view can be
-shared or reopened.
+shared or reopened. The rule across the site: <kbd>/</kbd> searches what you are looking at,
+<kbd>Ctrl</kbd>/<kbd>⌘</kbd>+<kbd>K</kbd> searches everything.
 
 {{< bookmarks >}}
 

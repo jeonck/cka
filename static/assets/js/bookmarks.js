@@ -11,6 +11,9 @@
 
 const list = document.getElementById("bookmarkList");
 if (list) {
+  // Tells the site-wide palette to leave "/" alone here: on this page it means
+  // "filter what I am looking at". ⌘K still opens the palette.
+  document.body.dataset.localSlash = "1";
   const rows = [...list.querySelectorAll("tr.bm-row")].map((tr) => ({
     tr,
     folder: tr.closest(".bm-folder"),

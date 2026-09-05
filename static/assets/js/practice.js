@@ -35,15 +35,19 @@ function renderList() {
   list.append(el("p", { class: "muted small" },
     `${shown.length} tasks · ${total} target minutes · the real exam is roughly 120 minutes for 15–20 tasks.`));
 
+  // Search results deep-link to a single task; mark it and scroll it into view
+  // rather than starting the clock, so arriving here is never an ambush.
+  const wanted = qs("task");
   for (const t of shown) {
     const st = store.taskState(t.id);
     const best = st.bestSeconds ? `best ${fmtSeconds(st.bestSeconds)}` : "not attempted";
-    list.append(el("div", { class: "card" },
+    list.append(el("div", { class: t.id === wanted ? "card is-target" : "card", id: `task-${t.id}` },
       el("p", { class: "eyebrow" }, `${t.domain} · ${t.points} points · target ${t.targetMinutes} min · ${best}`),
       el("h3", { style: "margin:2px 0 8px" }, t.title),
       el("p", { class: "small muted" }, t.scenario.slice(0, 150) + (t.scenario.length > 150 ? "…" : "")),
       el("button", { class: "btn", onclick: () => open(t) }, "Start timed attempt")));
   }
+  if (wanted) document.getElementById(`task-${wanted}`)?.scrollIntoView({ block: "center" });
 }
 
 function open(t) {
