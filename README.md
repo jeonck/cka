@@ -105,9 +105,14 @@ npm run build        # site -> public/     (hugo --gc --minify)
 npm run serve        # hugo server, live reload
 npm run build:pdf    # PDF  -> public/cka-reference.pdf
 npm run build:all    # both
-npm run check        # validate the drill data
+npm run check        # validate the drill data, including bookmark allow-list compliance
+npm run check:bookmarks   # live check: every bookmark resolves and every #anchor still exists
 npm run test:smoke   # drive every study tool in headless Chromium
 ```
+
+`check:bookmarks` is deliberately outside `check` and CI: it depends on upstream Kubernetes documentation URLs, so a
+page moving there would block deploys of this repository. Run it yourself in the week before an exam — heading anchors
+drift between releases, and a bookmark that lands at the top of a long page costs you the time it was meant to save.
 
 `npm run build:pdf` and `npm run test:smoke` both expect `npm run build` to have run first — the PDF is written into
 `public/`, and the smoke test serves `public/` over a local HTTP server.
