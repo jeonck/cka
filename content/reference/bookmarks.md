@@ -2,7 +2,7 @@
 title: Exam Bookmarks
 script: bookmarks
 weight: 2
-summary: 77 exam-legal documentation links, ordered by domain weight — and an honest note about whether you can take them into the exam at all.
+summary: 79 exam-legal documentation links, ordered by domain weight and walked in exam order — and an honest note about whether you can take them into the exam at all.
 ---
 
 # Exam bookmarks
@@ -32,7 +32,7 @@ page is a snapshot, not an authority.
 
 ## What is in the set, and why it is short
 
-Seventy-seven links, weighted the way the exam is: Troubleshooting and Cluster Architecture go deepest, Storage
+Seventy-nine links, weighted the way the exam is: Troubleshooting and Cluster Architecture go deepest, Storage
 gets seven. Nothing here is a page you could reproduce from `kubectl explain` in less time than the page takes
 to load — that is the entire selection rule. Deep links land on the anchor with the YAML on it rather than at
 the top of a long page.
@@ -45,6 +45,54 @@ in miniature, and the one thing you can practise here that survives into an exam
 <kbd>/</kbd> focuses the box, <kbd>Esc</kbd> clears it, and the query stays in the URL so a filtered view can be
 shared or reopened. The rule across the site: <kbd>/</kbd> searches what you are looking at,
 <kbd>Ctrl</kbd>/<kbd>⌘</kbd>+<kbd>K</kbd> searches everything.
+
+## The same set, in exam order
+
+The folders below sort by domain weight, which is the right order for a bookmarks bar. The exam does not run in that
+order: it runs [one loop](/reference/exam-strategy/#per-task-in-this-order), about seventeen times, with two set pieces
+inside it. This is which pages belong to which step. Every link filters the list below to the row it means — that is the
+lookup you will do in the exam, minus the bookmark.
+
+**Minute 0–2 · before task 1.** Aliases, completion, `$do`, `.vimrc`. Open the [kubectl quick reference](?q=quick-reference)
+in the docs tab — the alias block is at the top — and leave it there. Nothing else yet.
+
+**Step 1 · `use-context`, then `current-context`.** No page. If the task hands you a kubeconfig to repair instead of a
+context to switch to: [kubeconfig — contexts and users](?q=set-context).
+
+**Step 2 · read the task twice.** No page. Decide which of three shapes it is: *generate* (kubectl can produce it),
+*copy* (a spec block with no generator), or *recipe* (etcd, kubeadm). Note the namespace.
+
+**Step 3 · generate, don't author.** [kubectl create — subcommands](?q=create+subcommands) settles whether a generator
+exists. For field names, `kubectl explain --recursive` first; the [API reference](?q=object+fields) only when that
+fails. When there is no generator, these are the blocks you copy and cut down, by kind:
+
+| The task says | Copy from |
+|---|---|
+| NetworkPolicy, "deny all except…" | [the resource](?q=networkpolicy+resource) · [default deny](?q=default+deny) |
+| Ingress path rules · Gateway / HTTPRoute | [Ingress resource](?q=pathtype) · [Gateway API guides](?q=gateway+guides) |
+| PV / PVC / StorageClass | [PV/PVC YAML](?q=pv+pvc+yaml) · [StorageClass](?q=reclaimpolicy) |
+| probes · requests and limits · ConfigMap/Secret into a Pod | [probes](?q=probes) · [requests and limits](?q=units+for+cpu) · [ConfigMap into a Pod](?q=configmap+pod) |
+| taint/toleration · affinity · PDB | [tolerations](?q=taints) · [node affinity](?q=required+preferred) · [PodDisruptionBudget](?q=pdb) |
+| Role/RoleBinding · "create a user" | [RBAC YAML](?q=rbac+yaml) · [CSR](?q=certificatesigningrequest) |
+| Helm install/upgrade · Kustomize | [helm install](?q=create-namespace) · [Kustomize](?q=kustomize) |
+
+**Step 4 · apply. Step 5 · verify the end state.** The [verification table](/reference/exam-strategy/#step-5-is-what-converts-work-into-points)
+is the checklist, and it needs no page. When the check fails, two pages explain the two most common failures faster than
+thinking does: [Service has no endpoints](?q=no+endpoints) and [PVC Pending](?q=pvc+pending).
+
+**Minute 3 with no traction · flag and skip.** One `describe … | sed -n '/Events/,$p'` before you leave; if Events is
+empty, go. When you come back, walk the troubleshooting folder top to bottom — it is arranged in diagnosis order:
+[cluster](?q=cluster+broken) → [node](?q=node+status) → [Pod](?q=application+not+running) →
+[Service](?q=no+endpoints) → [DNS](?q=dns+resolution). `crictl` and `journalctl` are the two things you reach for when
+`kubectl` itself is the casualty: [crictl](?q=crictl) · [system logs](?q=system+component+logs).
+
+**The two set pieces · do them fresh, not at minute 100.** These are the only pages worth opening *before* you type
+anything: [etcd backup](?q=etcd+back) · [etcd restore](?q=etcd+restore) · [kubeadm upgrade — control plane](?q=unhold) ·
+[kubeadm upgrade — workers](?q=upgrade+worker) · [drain](?q=delete-emptydir). Both recipes are all-or-nothing; a half-finished
+upgrade is worth the same as an untouched one.
+
+**Minute 110–120 · no new tasks.** Re-run the verification `get` on everything you marked done — Running, Bound, Ready,
+endpoints non-empty, `auth can-i` → yes. Nothing to look up. This is the ten minutes that most often turns a 64 into a 70.
 
 {{< bookmarks >}}
 

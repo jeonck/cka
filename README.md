@@ -47,7 +47,7 @@ reported seeing it on an exam.
 | **SM-2 scheduler** | Ease factor, interval and repetition count per item, driving both the flashcard and cloze queues. |
 | **Dashboard** | Per-domain mastery and time spent, sorted by *exam risk* — curriculum weight × distance from mastery — so the weakest high-weight domain always leads. |
 | **Study plan** | Target exam date in, daily workload out, with the last three days reserved for review only. |
-| **Exam bookmarks** | 77 exam-legal documentation links, ordered by domain weight, with the symptom that should send you to each — searchable by that symptom, which is the drill. Downloadable as a Netscape bookmark file for the simulator, and printed into the PDF as a symptom→page index. |
+| **Exam bookmarks** | 79 exam-legal documentation links, ordered by domain weight and walked once more in exam order, with the symptom that should send you to each — searchable by that symptom, which is the drill. Downloadable as a Netscape bookmark file for the simulator, and printed into the PDF as a symptom→page index. |
 | **Site-wide search** | A command palette over one index — every prose section with its own anchor, plus all 156 drill items, the practice tasks, the mnemonics and the bookmarks. <kbd>/</kbd> anywhere, <kbd>⌘K</kbd> even where a page has its own filter. Fetched on first open, not on page load. |
 | **One-book PDF** | 32 dense A4 pages generated from the same markdown and JSON as the site. |
 
