@@ -40,7 +40,8 @@ reported seeing it on an exam.
 | | |
 |---|---|
 | **Decision-tree content** | Five domain pages organised as *symptom → decision tree → minimal command sequence → why it works*. Imperative `kubectl` is preferred over YAML authoring throughout. |
-| **Practice tasks** | 17 original timed scenarios (114 target minutes, close to the real exam's shape), each with a named cluster context, a per-step model solution with reasoning, and verification commands. |
+| **Practice tasks** | 29 original timed scenarios (154 target minutes), each with a named cluster context, a per-step model solution with reasoning, and verification commands. Twelve of them form the kind lab below. |
+| **kind lab** | A three-node local cluster (`setup.sh`) seeded with twelve exam-shaped tasks in 40 minutes, including a broken Deployment, a dark Service and a NotReady node, and a grader (`check.sh`) that scores by end state. Calico rather than kindnet, so the NetworkPolicy task is actually enforced. |
 | **Cloze drills** | 35 items, 123 blanks, hiding flags, field names and paths inside real manifests and commands. |
 | **Flashcards** | 90 cards, weighted toward the heavier domains. |
 | **Mnemonics** | 14 memory aids for what must be recalled cold — `kubeadm` upgrade ordering, etcd's mandatory TLS flags, taint effects, the three conditions that make a PVC bind. |

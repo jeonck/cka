@@ -1,0 +1,12 @@
+{{- /* The tasks of one lab, read from data/tasks.json by cluster context, so the
+       table here and the timed version under Practice are the same items. */ -}}
+{{- $ctx := .Get 0 -}}
+{{- $n := 0 -}}
+<table><thead><tr><th>#</th><th>Domain</th><th>Task</th><th>Budget</th></tr></thead><tbody>
+{{- range hugo.Data.tasks.items }}{{ if eq .context $ctx }}{{ $n = add $n 1 }}
+<tr><td>{{ $n }}</td><td style="white-space:nowrap">{{ .domain }}</td>
+<td><a href="{{ printf "tools/practice/?task=%s" .id | relURL }}">{{ .title }}</a><br>
+<span class="small muted">{{ $.Page.RenderString .scenario }}</span></td>
+<td style="white-space:nowrap">{{ .targetMinutes }} min · {{ .points }} pt</td></tr>
+{{- end }}{{ end }}
+</tbody></table>

@@ -261,6 +261,171 @@
       ],
       "verify":["kubectl get pvc data -n analytics   # Bound","kubectl get pods -n analytics   # Running"],
       "gotcha":"'waiting for first consumer to be created before binding' is WaitForFirstConsumer working correctly — the fix there is to schedule the consuming Pod, not to touch storage."
+    },
+    {
+      "id": "tk-018", "domain": "workloads-scheduling", "title": "kind lab 1 · Deployment with requests", "points": 4, "targetMinutes": 3,
+      "context":"kind-cka",
+      "scenario":"In namespace `apps`, create Deployment `api`: image `nginx:1.27-alpine`, 3 replicas, container requests cpu `100m` / memory `64Mi`.",
+      "hints":["Two imperative commands. No YAML file needs to exist.", "`set resources` patches the Pod template and rolls it out."],
+      "solution":[
+        {"cmd": "kubectl config use-context kind-cka && kubectl config current-context", "why": "Step zero, every task."},
+        {"cmd": "kubectl create deploy api -n apps --image=nginx:1.27-alpine --replicas=3", "why": "The generator sets labels, selector and container name (`nginx`) consistently — hand-written YAML is where selector mismatches come from."},
+        {"cmd": "kubectl set resources deploy/api -n apps --requests=cpu=100m,memory=64Mi", "why": "Requests live under the container; `set resources` finds the path so you do not have to."}
+      ],
+      "verify":["kubectl get deploy api -n apps   # 3/3", "kubectl get deploy api -n apps -o jsonpath='{.spec.template.spec.containers[0].resources.requests}{\"\\n\"}'"],
+      "gotcha":"`kubectl create deploy` has no --requests flag. Either `set resources` afterwards or `$do > api.yaml` and add the block — the first is one line and cannot mis-indent."
+    },
+    {
+      "id": "tk-019", "domain": "workloads-scheduling", "title": "kind lab 2 · Rolling update, then roll back", "points": 3, "targetMinutes": 2,
+      "context":"kind-cka",
+      "scenario":"Roll Deployment `api` (namespace `apps`) to image `nginx:1.28-alpine`, wait for the rollout, then roll it back to the previous revision.",
+      "hints":["The container is named `nginx` because `create deploy` named it after the image.", "`rollout undo` with no flags means 'previous'."],
+      "solution":[
+        {"cmd": "kubectl set image deploy/api -n apps nginx=nginx:1.28-alpine", "why": "`container=image`. Get the container name from `get deploy -o jsonpath='{.spec.template.spec.containers[*].name}'` if unsure."},
+        {"cmd": "kubectl rollout status deploy/api -n apps", "why": "Blocks until the new ReplicaSet is fully available — the rollback only counts if the update actually happened first."},
+        {"cmd": "kubectl rollout undo deploy/api -n apps", "why": "Previous revision. `--to-revision=N` when the task names one; `rollout history` shows the numbers."}
+      ],
+      "verify":["kubectl rollout history deploy/api -n apps   # three revisions", "kubectl get deploy api -n apps -o jsonpath='{.spec.template.spec.containers[0].image}{\"\\n\"}'   # nginx:1.27-alpine"],
+      "gotcha":"After the undo, history shows revisions 2 and 3, not 1 and 2: the rolled-back template is re-recorded as a new revision. Graders look at the live image, not the revision number."
+    },
+    {
+      "id": "tk-020", "domain": "workloads-scheduling", "title": "kind lab 3 · Pin a Pod to a node", "points": 3, "targetMinutes": 2,
+      "context":"kind-cka",
+      "scenario":"In namespace `apps`, create Pod `pinned` (image `nginx:1.27-alpine`) that must run on node `cka-worker2`.",
+      "hints":["`spec.nodeName` bypasses the scheduler entirely and is one line.", "`nodeSelector` on `kubernetes.io/hostname` is the same result in three lines."],
+      "solution":[
+        {"cmd": "kubectl run pinned -n apps --image=nginx:1.27-alpine --dry-run=client -o yaml > pinned.yaml", "why": "Generate the Pod skeleton; you only add one field."},
+        {"cmd": "vim pinned.yaml   # under spec: add   nodeName: cka-worker2", "why": "`nodeName` at spec level, sibling of `containers`. The kubelet on that node picks it up directly."},
+        {"cmd": "kubectl apply -f pinned.yaml", "why": "Apply, then verify placement rather than trusting it."}
+      ],
+      "verify":["kubectl get pod pinned -n apps -o wide   # NODE = cka-worker2, Running"],
+      "gotcha":"In the kind lab `cka-worker2` starts NotReady — fix its kubelet (lab 11) first or this Pod sits Pending with a perfectly correct spec. `nodeName` skips taint checks — it schedules onto a tainted node too. That makes it the wrong tool when a task says 'tolerate', and the right one when it says 'must run on'."
+    },
+    {
+      "id": "tk-021", "domain": "workloads-scheduling", "title": "kind lab 4 · Taint a node, tolerate it, land on it", "points": 4, "targetMinutes": 3,
+      "context":"kind-cka",
+      "scenario":"Taint node `cka-worker` with `dedicated=db:NoSchedule`. Then in namespace `apps` create Pod `db` (image `redis:7-alpine`) that tolerates that taint **and runs on `cka-worker`**.",
+      "hints":["A toleration permits placement; it does not cause it.", "Two spec fields: `tolerations` and `nodeName`."],
+      "solution":[
+        {"cmd": "kubectl taint nodes cka-worker dedicated=db:NoSchedule", "why": "key=value:effect. The trailing-dash form removes it; do not type that by accident."},
+        {"cmd": "kubectl run db -n apps --image=redis:7-alpine --dry-run=client -o yaml > db.yaml", "why": "Skeleton first."},
+        {"cmd": "vim db.yaml   # under spec:\n  nodeName: cka-worker\n  tolerations:\n  - key: dedicated\n    operator: Equal\n    value: db\n    effect: NoSchedule", "why": "The toleration matches the taint exactly (key, value, effect); `nodeName` is what actually puts it there. Without it the scheduler may legally pick `cka-worker2`."},
+        {"cmd": "kubectl apply -f db.yaml", "why": "Then check the node column, not just Running."}
+      ],
+      "verify":["kubectl describe node cka-worker | grep -A1 Taints", "kubectl get pod db -n apps -o wide   # NODE = cka-worker"],
+      "gotcha":"'Tolerates the taint and runs on the node' is two requirements. Candidates write the toleration, see Running, and lose the task because the Pod landed on the other worker."
+    },
+    {
+      "id": "tk-022", "domain": "services-networking", "title": "kind lab 5 · Expose a Deployment", "points": 3, "targetMinutes": 2,
+      "context":"kind-cka",
+      "scenario":"Expose Deployment `api` (namespace `apps`) as a ClusterIP Service `api-svc`: Service port 8080, container port 80.",
+      "hints":["`expose` copies the Deployment's selector, so the endpoints cannot mismatch.", "`--port` is the Service side, `--target-port` the container side."],
+      "solution":[
+        {"cmd": "kubectl expose deploy api -n apps --name=api-svc --port=8080 --target-port=80", "why": "ClusterIP is the default type. The selector is taken from the Deployment, which is the one thing you must not get wrong."}
+      ],
+      "verify":["kubectl get svc api-svc -n apps   # 8080/TCP", "kubectl get endpoints api-svc -n apps   # three <ip>:80 entries"],
+      "gotcha":"`create svc clusterip` uses the *Service name* as the selector (`app: api-svc`) — that gives you an empty endpoints list. `expose` is the generator that reads the workload."
+    },
+    {
+      "id": "tk-023", "domain": "services-networking", "title": "kind lab 6 · Allow one label, deny the rest", "points": 6, "targetMinutes": 4,
+      "context":"kind-cka",
+      "scenario":"Namespace `secure` has Pod `web` (label `app=web`) behind a Service. Write a NetworkPolicy so that only Pods labelled `access=granted` can reach `web` on port 80. All other ingress to `web` must be blocked.",
+      "hints":["There is no generator; copy the resource block from the docs and cut it down.", "A policy that selects a Pod and lists one `from` rule is already 'deny everything else'."],
+      "solution":[
+        {"cmd": "cat > np.yaml <<'EOF'\napiVersion: networking.k8s.io/v1\nkind: NetworkPolicy\nmetadata:\n  name: web-allow-granted\n  namespace: secure\nspec:\n  podSelector:\n    matchLabels:\n      app: web\n  policyTypes: [Ingress]\n  ingress:\n  - from:\n    - podSelector:\n        matchLabels:\n          access: granted\n    ports:\n    - protocol: TCP\n      port: 80\nEOF", "why": "`podSelector` is who the policy applies to; `from` is who may talk. Once a Pod is selected by any Ingress policy, everything not listed is denied — no explicit deny rule exists or is needed."},
+        {"cmd": "kubectl apply -f np.yaml", "why": "Then prove it from both sides, because a policy that applies cleanly can still select nothing."},
+        {"cmd": "kubectl run t1 -n secure --rm -it --restart=Never --image=busybox:1.36 --labels=access=granted -- wget -qO- -T 3 http://web", "why": "Should return the nginx page."},
+        {"cmd": "kubectl run t2 -n secure --rm -it --restart=Never --image=busybox:1.36 -- wget -qO- -T 3 http://web", "why": "Should time out. If it succeeds, either the selector is wrong or the CNI does not enforce policy."}
+      ],
+      "verify":["kubectl describe netpol -n secure", "kubectl run t -n secure --rm -it --restart=Never --image=busybox:1.36 -- wget -qO- -T 3 http://web   # times out"],
+      "gotcha":"kind's default CNI (kindnet) does not enforce NetworkPolicy at all — the lab's setup.sh installs Calico for that reason. If you built the cluster another way, the policy will apply and do nothing."
+    },
+    {
+      "id": "tk-024", "domain": "storage", "title": "kind lab 7 · PV → PVC → Pod, with a file to prove it", "points": 7, "targetMinutes": 5,
+      "context":"kind-cka",
+      "scenario":"Create a 1Gi hostPath PersistentVolume `pv-data` (path `/mnt/data`, accessMode ReadWriteOnce, storageClassName `manual`) and a PVC `pvc-data` in namespace `storage` that binds to it. Create Pod `data-pod` (`busybox:1.36`, command `sleep 3600`) mounting the PVC at `/data`, and make `/data/hello.txt` contain `cka`.",
+      "hints":["PV, PVC and Pod: three objects, one YAML file with `---` is fastest.", "The PVC binds only if accessModes, size and storageClassName all agree with the PV."],
+      "solution":[
+        {"cmd": "cat > pv.yaml <<'EOF'\napiVersion: v1\nkind: PersistentVolume\nmetadata:\n  name: pv-data\nspec:\n  capacity:\n    storage: 1Gi\n  accessModes: [ReadWriteOnce]\n  storageClassName: manual\n  hostPath:\n    path: /mnt/data\n---\napiVersion: v1\nkind: PersistentVolumeClaim\nmetadata:\n  name: pvc-data\n  namespace: storage\nspec:\n  accessModes: [ReadWriteOnce]\n  storageClassName: manual\n  resources:\n    requests:\n      storage: 1Gi\nEOF\nkubectl apply -f pv.yaml", "why": "Same accessMode, same class, request ≤ capacity — the three binding conditions."},
+        {"cmd": "kubectl get pvc -n storage   # Bound", "why": "Check binding before building the Pod; a Pending PVC leaves the Pod ContainerCreating and you will misdiagnose it."},
+        {"cmd": "kubectl run data-pod -n storage --image=busybox:1.36 --dry-run=client -o yaml -- sleep 3600 > pod.yaml", "why": "Everything after `--` becomes the container command."},
+        {"cmd": "vim pod.yaml   # spec.volumes: [{name: data, persistentVolumeClaim: {claimName: pvc-data}}]\n# containers[0].volumeMounts: [{name: data, mountPath: /data}]", "why": "volumes at spec level, volumeMounts inside the container; the two `name` fields must match each other."},
+        {"cmd": "kubectl apply -f pod.yaml && kubectl wait --for=condition=Ready pod/data-pod -n storage", "why": "Wait, or the exec below races the container start."},
+        {"cmd": "kubectl exec data-pod -n storage -- sh -c 'echo cka > /data/hello.txt'", "why": "The file is on the node's `/mnt/data` now; that is what makes the PVC observable."}
+      ],
+      "verify":["kubectl get pv pv-data pvc -n storage   # both Bound", "kubectl exec data-pod -n storage -- cat /data/hello.txt   # cka"],
+      "gotcha":"kind ships a default StorageClass named `standard`. Omit `storageClassName: manual` from the PVC and it is dynamically provisioned by `standard` instead — Bound, green, and bound to the wrong volume."
+    },
+    {
+      "id": "tk-025", "domain": "workloads-scheduling", "title": "kind lab 8 · ConfigMap and Secret as env", "points": 4, "targetMinutes": 3,
+      "context":"kind-cka",
+      "scenario":"In namespace `apps`, create ConfigMap `app-config` with `MODE=prod` and Secret `db-secret` with `password=s3cret`. Create Pod `cfg-pod` (`busybox:1.36`, `sleep 3600`) with env var `MODE` from the ConfigMap key and `DB_PASSWORD` from the Secret's `password` key.",
+      "hints":["Both objects are one `--from-literal` each.", "`valueFrom.configMapKeyRef` / `valueFrom.secretKeyRef` — the env var name and the key name differ for the Secret."],
+      "solution":[
+        {"cmd": "kubectl create cm app-config -n apps --from-literal=MODE=prod\nkubectl create secret generic db-secret -n apps --from-literal=password=s3cret", "why": "Imperative; no base64 by hand."},
+        {"cmd": "kubectl run cfg-pod -n apps --image=busybox:1.36 --dry-run=client -o yaml -- sleep 3600 > cfg.yaml", "why": "Skeleton, then add the env block."},
+        {"cmd": "vim cfg.yaml   # containers[0].env:\n  - name: MODE\n    valueFrom:\n      configMapKeyRef: {name: app-config, key: MODE}\n  - name: DB_PASSWORD\n    valueFrom:\n      secretKeyRef: {name: db-secret, key: password}", "why": "`name` is the variable, `key` is the entry in the object. `envFrom` would import every key under its own name — wrong here because the task wants `DB_PASSWORD`, not `password`."},
+        {"cmd": "kubectl apply -f cfg.yaml", "why": "Then read the variables back from inside."}
+      ],
+      "verify":["kubectl exec cfg-pod -n apps -- sh -c 'echo $MODE $DB_PASSWORD'   # prod s3cret"],
+      "gotcha":"A typo in `key` does not fail apply — the Pod goes CreateContainerConfigError and `describe` says which key is missing. Verify with exec, not with `get pod`."
+    },
+    {
+      "id": "tk-026", "domain": "cluster-architecture", "title": "kind lab 9 · Least-privilege ServiceAccount", "points": 5, "targetMinutes": 4,
+      "context":"kind-cka",
+      "scenario":"In namespace `apps`, create ServiceAccount `ci` and give it — via a Role and RoleBinding — permission to **create and list Deployments only**. It must not be able to delete Pods or read Secrets.",
+      "hints":["Three `kubectl create` commands; no YAML.", "Prove the negative too — `auth can-i` with `--as` takes seconds."],
+      "solution":[
+        {"cmd": "kubectl create sa ci -n apps", "why": "The subject."},
+        {"cmd": "kubectl create role ci-deploy -n apps --verb=create,list --resource=deployments", "why": "Verbs and resources exactly as asked; `deployments` resolves to apps/v1 on its own."},
+        {"cmd": "kubectl create rolebinding ci-deploy -n apps --role=ci-deploy --serviceaccount=apps:ci", "why": "`namespace:name` for a ServiceAccount subject — not `--user`."},
+        {"cmd": "kubectl auth can-i create deployments -n apps --as=system:serviceaccount:apps:ci\nkubectl auth can-i delete pods -n apps --as=system:serviceaccount:apps:ci", "why": "yes / no. The full principal name is `system:serviceaccount:<ns>:<sa>`."}
+      ],
+      "verify":["kubectl auth can-i list deployments -n apps --as=system:serviceaccount:apps:ci   # yes", "kubectl auth can-i get secrets -n apps --as=system:serviceaccount:apps:ci   # no"],
+      "gotcha":"`--resource=deployments` also needs `--verb=get` if the task says 'view'; here it does not, and adding verbs the task did not ask for is how 'only' gets marked wrong."
+    },
+    {
+      "id": "tk-027", "domain": "troubleshooting", "title": "kind lab 10 · Deployment down and Service dark", "points": 8, "targetMinutes": 5,
+      "context":"kind-cka",
+      "scenario":"In namespace `trouble`, Deployment `broken` has no Ready Pods and Service `broken-svc` receives no traffic. Fix both so that 2 Pods are Ready and the Service has 2 endpoints.",
+      "hints":["Two independent faults: one in the Pod template, one in the Service.", "Fix the Pods first — an empty endpoints list is expected while nothing is Ready."],
+      "solution":[
+        {"cmd": "kubectl get deploy,rs,pods,svc,endpoints -n trouble", "why": "One screen: how many Pods exist, in what state, and whether the Service selects anything."},
+        {"cmd": "kubectl describe pod -n trouble -l app=broken | sed -n '/Events/,$p'", "why": "ImagePullBackOff with the exact image string — the tag is misspelled."},
+        {"cmd": "kubectl set image deploy/broken -n trouble nginx=nginx:1.27-alpine && kubectl rollout status deploy/broken -n trouble", "why": "Fix the template, not the Pod; the Deployment would just recreate the broken one."},
+        {"cmd": "kubectl get endpoints broken-svc -n trouble   # still <none>", "why": "Pods Ready but no endpoints means the Service selector does not match the Pod labels."},
+        {"cmd": "kubectl get svc broken-svc -n trouble -o jsonpath='{.spec.selector}{\"\\n\"}'; kubectl get pods -n trouble --show-labels", "why": "Put them side by side; the mismatch is usually one character."},
+        {"cmd": "kubectl patch svc broken-svc -n trouble -p '{\"spec\":{\"selector\":{\"app\":\"broken\"}}}'", "why": "`patch` beats `edit`: no editor, no risk of touching anything else."}
+      ],
+      "verify":["kubectl get deploy broken -n trouble   # 2/2", "kubectl get endpoints broken-svc -n trouble   # two addresses"],
+      "gotcha":"Also check the Service `targetPort` against the container port. It is correct in this lab, but it is the third classic cause and costs nothing to look at while you are in the spec."
+    },
+    {
+      "id": "tk-028", "domain": "troubleshooting", "title": "kind lab 11 · Node NotReady", "points": 6, "targetMinutes": 4,
+      "context":"kind-cka",
+      "scenario":"Node `cka-worker2` is NotReady. Find the cause and return it to Ready. Node shell: `podman exec -it cka-worker2 bash`.",
+      "hints":["`describe node` tells you the kubelet stopped posting status — that names the component.", "On the node, the same three commands every time: `systemctl status kubelet`, `journalctl -u kubelet`, `systemctl start kubelet`."],
+      "solution":[
+        {"cmd": "kubectl get nodes\nkubectl describe node cka-worker2 | grep -A8 Conditions", "why": "'Kubelet stopped posting node status' on every condition = the kubelet itself, not the runtime or the network."},
+        {"cmd": "podman exec -it cka-worker2 bash", "why": "kind nodes are containers; this is the lab's stand-in for `ssh node`."},
+        {"cmd": "systemctl status kubelet", "why": "inactive (dead) — stopped, not crashing. If it were crash-looping, `journalctl -u kubelet -n 50` shows the config error."},
+        {"cmd": "systemctl enable --now kubelet && exit", "why": "`enable` too, so the fix survives a node reboot — graders sometimes reboot."}
+      ],
+      "verify":["kubectl get nodes   # cka-worker2 Ready within ~30s"],
+      "gotcha":"If `start` fails, the cause is on the node: `journalctl -u kubelet` for a bad flag or path, `/var/lib/kubelet/config.yaml` for the config, `systemctl status containerd` for the runtime. Do not start editing until the log has named the file."
+    },
+    {
+      "id": "tk-029", "domain": "cluster-architecture", "title": "kind lab 12 · etcd snapshot", "points": 5, "targetMinutes": 3,
+      "context":"kind-cka",
+      "scenario":"Save a snapshot of etcd to `/var/lib/etcd/backup.db`. The etcd certificates are in `/etc/kubernetes/pki/etcd/`.",
+      "hints":["Three TLS flags plus the endpoint. Copy them from the docs, do not type from memory.", "kind nodes have no `etcdctl` binary — run it inside the etcd Pod."],
+      "solution":[
+        {"cmd": "kubectl -n kube-system get pods -l component=etcd", "why": "The Pod is `etcd-cka-control-plane`; its `/var/lib/etcd` is a hostPath onto the node."},
+        {"cmd": "kubectl -n kube-system exec etcd-cka-control-plane -- etcdctl --endpoints=https://127.0.0.1:2379 --cacert=/etc/kubernetes/pki/etcd/ca.crt --cert=/etc/kubernetes/pki/etcd/server.crt --key=/etc/kubernetes/pki/etcd/server.key snapshot save /var/lib/etcd/backup.db", "why": "The three certificate paths come straight from the static Pod manifest's own flags — `grep -- --cert /etc/kubernetes/manifests/etcd.yaml` on the node if they differ."},
+        {"cmd": "kubectl -n kube-system exec etcd-cka-control-plane -- etcdutl snapshot status /var/lib/etcd/backup.db -w table", "why": "Non-zero key count proves the file is a real snapshot, not an error message written to disk."}
+      ],
+      "verify":["podman exec cka-control-plane ls -l /var/lib/etcd/backup.db"],
+      "gotcha":"On the real exam `etcdctl` is on the control-plane node and you run it there after `ssh`. The flags are identical; only where you type them changes."
     }
   ]
 }
