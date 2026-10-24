@@ -28,7 +28,22 @@ nodes:
 KIND
   kubectl apply -f "https://raw.githubusercontent.com/projectcalico/calico/${CALICO}/manifests/calico.yaml"
 fi
+# A podman/docker machine restart leaves the nodes Exited, and `kind` has no
+# "start" verb — so bring them back here rather than making this someone's
+# morning debugging session. The published API port is part of the container
+# config and survives a start, but refresh the kubeconfig anyway in case it did
+# not: a stale port looks exactly like a dead cluster.
+stopped=$("$RUNTIME" ps -a --filter label=io.x-k8s.kind.cluster=cka --filter status=exited --format '{{.Names}}')
+if [[ -n $stopped ]]; then
+  echo "starting stopped nodes: $(echo $stopped | tr '\n' ' ')"
+  # shellcheck disable=SC2086
+  "$RUNTIME" start $stopped >/dev/null
+  kind export kubeconfig --name cka
+fi
+
 kubectl config use-context kind-cka
+for _ in $(seq 60); do kubectl version >/dev/null 2>&1 && break; sleep 5; done
+kubectl version >/dev/null || { echo "the API server never came back — try: kind delete cluster --name cka && ./setup.sh" >&2; exit 1; }
 
 # --- reset ---------------------------------------------------------------------
 for n in $NODES; do "$RUNTIME" exec "$n" systemctl start kubelet >/dev/null 2>&1 || true; done
